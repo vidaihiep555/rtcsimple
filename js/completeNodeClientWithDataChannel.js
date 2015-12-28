@@ -122,7 +122,8 @@ socket.on('message', function (message){
 // Send message to the other peer via the signaling server
 function sendMessage(message){
 	console.log('Sending message: ', message);
-	socket.emit('message', message);
+	var mex = {message: message, room:room};
+	socket.emit('message', mex);
 }
 // Channel negotiation trigger function
 function checkAndStart() {

@@ -11,18 +11,24 @@ var app = http.createServer(function (req, res) {
 var io = require('socket.io').listen(app);
 
 var nums = 0;
+var x;
 // Let's start managing connections...
 io.sockets.on('connection', function (socket){
 	// Handle 'message' messages
 	socket.on('message', function (message) {
-		log('S --> got message: ', message);
+		log('S --> got message: ', message.message);
 		// channel-only broadcast...
-		socket.broadcast.to(message.channel).emit('message', message);
+		//socket.broadcast.to(message.channel).emit('message', message);
+		//socket.broadcast.to('11').emit('message', message);
+		socket.broadcast.emit('message', message.message);
+		console.log(socket);
 	});
 	// Handle 'create or join' messages
 	socket.on('create or join', function (room) {
+		console.log("TEST");
+		x = room;
 		//var numClients = io.sockets.adapter.clients(room).length;
-		var clientsList = io.sockets.adapter.rooms[room];
+		//var clientsList = io.sockets.adapter.rooms[room];
 		//var numClients = clientsList.length;
 		var numClients = nums;
 		log('S --> Room ' + room + ' has ' + numClients + ' client(s)');
