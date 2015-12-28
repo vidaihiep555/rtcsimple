@@ -68,10 +68,10 @@ function handleUserMediaError(error){
 socket.on('created', function (room){
 	console.log('Created room ' + room);
 	isInitiator = true;
-// Call getUserMedia()
-navigator.getUserMedia(constraints, handleUserMedia, handleUserMediaError);
-console.log('Getting user media with constraints', constraints);
-checkAndStart();
+	// Call getUserMedia()
+	navigator.getUserMedia(constraints, handleUserMedia, handleUserMediaError);
+	console.log('Getting user media with constraints', constraints);
+	checkAndStart();
 });
 // Handle 'full' message coming back from server:
 // this peer arrived too late :-(
