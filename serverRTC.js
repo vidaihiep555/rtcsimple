@@ -16,8 +16,8 @@ io.sockets.on('connection', function (socket){
 	// Handle 'message' messages
 	socket.on('message', function (message) {
 		log('S --> got message: ', message);
-	// channel-only broadcast...
-	socket.broadcast.to(message.channel).emit('message', message);
+		// channel-only broadcast...
+		socket.broadcast.to(message.channel).emit('message', message);
 	});
 	// Handle 'create or join' messages
 	socket.on('create or join', function (room) {

@@ -38,7 +38,7 @@ var pc_constraints = {
 	'optional': [
 	{'DtlsSrtpKeyAgreement': true}
 	]};
-	var sdpConstraints = {};
+var sdpConstraints = {};
 // Let's get started: prompt user for input (room name)
 var room = prompt('Enter room name:');
 // Connect to signaling server
@@ -90,9 +90,9 @@ socket.on('join', function (room){
 socket.on('joined', function (room){
 	console.log('This peer has joined room ' + room);
 	isChannelReady = true;
-// Call getUserMedia()
-navigator.getUserMedia(constraints, handleUserMedia, handleUserMediaError);
-console.log('Getting user media with constraints', constraints);
+	// Call getUserMedia()
+	navigator.getUserMedia(constraints, handleUserMedia, handleUserMediaError);
+	console.log('Getting user media with constraints', constraints);
 });
 // Server-sent log message...
 socket.on('log', function (array){
@@ -152,17 +152,17 @@ function createPeerConnection() {
 	pc.onremovestream = handleRemoteStreamRemoved;
 	if (isInitiator) {
 		try {
-	// Create a reliable data channel
-	sendChannel = pc.createDataChannel("sendDataChannel",
-		{reliable: true});
-	trace('Created send data channel');
-	} catch (e) {
-		alert('Failed to create data channel. ');
-		trace('createDataChannel() failed with exception: ' + e.message);
-	}
-	sendChannel.onopen = handleSendChannelStateChange;
-	sendChannel.onmessage = handleMessage;
-	sendChannel.onclose = handleSendChannelStateChange;
+			// Create a reliable data channel
+			sendChannel = pc.createDataChannel("sendDataChannel",
+				{reliable: true});
+			trace('Created send data channel');
+		} catch (e) {
+			alert('Failed to create data channel. ');
+			trace('createDataChannel() failed with exception: ' + e.message);
+		}
+		sendChannel.onopen = handleSendChannelStateChange;
+		sendChannel.onmessage = handleMessage;
+		sendChannel.onclose = handleSendChannelStateChange;
 	} else { // Joiner
 		pc.ondatachannel = gotReceiveChannel;
 	}
