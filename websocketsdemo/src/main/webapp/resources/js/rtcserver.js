@@ -186,30 +186,37 @@ function onCreated(){
 
 // Handle 'full' message coming back from server:
 // this peer arrived too late :-(
-socket.on('full', function(room) {
+function onFull(){
     console.log('Room ' + room + ' is full');
-});
+}
+
 // Handle 'join' message coming back from server:
 // another peer is joining the channel
-socket.on('join', function(room) {
+function onJoin(){
     console.log('Another peer made a request to join room ' + room);
     console.log('This peer is the initiator of room ' + room + '!');
     isChannelReady = true;
-});
+}
+
 // Handle 'joined' message coming back from server:
 // this is the second peer joining the channel
-socket.on('joined', function(room) {
+function onJoined(){
     console.log('This peer has joined room ' + room);
     isChannelReady = true;
     // Call getUserMedia()
     navigator.getUserMedia(constraints, handleUserMedia, handleUserMediaError);
     console.log('Getting user media with constraints', constraints);
-});
+}
+
 // Server-sent log message...
-socket.on('log', function(array) {
-    console.log.apply(console, array);
-});
+function onLog(){
+    //console.log.apply(console, array);
+}
+
 // Receive message from the other peer via the signaling server
+function onMessage(){
+    
+}
 socket.on('message', function(message) {
     console.log('Received message:', message);
     if (message === 'got user media') {
