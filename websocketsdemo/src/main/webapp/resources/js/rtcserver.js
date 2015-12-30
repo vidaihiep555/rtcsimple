@@ -1,53 +1,6 @@
 var webSocket;
 var messages = document.getElementById("messages");
 
-function openSocket() {
-    // Ensures only one connection is open at a time
-    if (webSocket !== undefined && webSocket.readyState !== WebSocket.CLOSED) {
-        writeResponse("WebSocket is already opened.");
-        return;
-    }
-    // Create a new instance of the websocket
-    webSocket = new WebSocket("ws://54.254.156.78:8080/websocketsdemo/echo");
-
-    /**
-     * Binds functions to the listeners for the websocket.
-     */
-    webSocket.onopen = function(event) {
-        // For reasons I can't determine, onopen gets called twice
-        // and the first time event.data is undefined.
-        // Leave a comment if you know the answer.
-        if (event.data === undefined)
-            return;
-
-        writeResponse(event.data);
-    };
-
-    webSocket.onmessage = function(event) {
-        writeResponse(event.data);
-    };
-
-    webSocket.onclose = function(event) {
-        writeResponse("Connection closed");
-    };
-}
-
-/**
- * Sends the value of the text input to the server
- */
-function send() {
-    var text = document.getElementById("messageinput").value;
-    webSocket.send(text);
-}
-
-function closeSocket() {
-    webSocket.close();
-}
-
-function writeResponse(text) {
-    messages.innerHTML += "<br/>" + text;
-}
-
 // Look after different browser vendors' ways of calling the getUserMedia()
 // API method:
 // Opera --> getUserMedia
@@ -99,41 +52,138 @@ var pc_constraints = {
 var sdpConstraints = {};
 // Let's get started: prompt user for input (room name)
 var room = prompt('Enter room name:');
+
 // Connect to signaling server
-var socket = io.connect("http://localhost:8181");
+// Ensures only one connection is open at a time
+if (webSocket !== undefined && webSocket.readyState !== WebSocket.CLOSED) {
+    writeResponse("WebSocket is already opened.");
+    return;
+}
+// Create a new instance of the websocket
+webSocket = new WebSocket("ws://localhost:8080/websocketsdemo/rtcserver");
+
 // Send 'Create or join' message to singnaling server
 if (room !== '') {
     console.log('Create or join room', room);
-    socket.emit('create or join', room);
+    var message = {
+        type : "create or join",
+        room : room,
+        message : ""
+    }
+    sendMessage(message);
 }
+
 // Set getUserMedia constraints
 var constraints = {
     video : true,
     audio : true
 };
+
 // From this point on, execution proceeds based on asynchronous events...
 // getUserMedia() handlers...
 function handleUserMedia(stream) {
     localStream = stream;
     attachMediaStream(localVideo, stream);
     console.log('Adding local stream.');
-    sendMessage('got user media');
+    var message = {
+        type : message,
+        message : "got user media"
+    }
 }
 function handleUserMediaError(error) {
     console.log('navigator.getUserMedia error: ', error);
 }
+
+function openSocket() {
+    /**
+     * Binds functions to the listeners for the websocket.
+     */
+    webSocket.onopen = function(event) {
+        // For reasons I can't determine, onopen gets called twice
+        // and the first time event.data is undefined.
+        // Leave a comment if you know the answer.
+        if (event.data === undefined)
+            return;
+
+        writeResponse(event.data);
+    };
+
+    webSocket.onmessage = function(event) {
+        var obj = JSON.parse(data.event);
+        switch(obj.type){
+            case "created" :
+                //dasdasd
+                break;
+            case "full" :
+                //
+                break;
+            case "joined" :
+                //
+                break;
+            case "join" :
+                //
+                break;
+            case "log" :
+                //
+                break;
+            case: "message" :
+                //
+                break;
+            default :
+                //asdasd
+        }
+        writeResponse(event.data);
+    };
+
+    webSocket.onclose = function(event) {
+        writeResponse("Connection closed");
+    };
+}
+
+/**
+ * Sends the value of the text input to the server
+ */
+function send() {
+    var text = document.getElementById("messageinput").value;
+    webSocket.send(text);
+}
+
+// Send message to the other peer via the signaling server
+function sendMessage(message) {
+    console.log('Sending message: ', message);
+    websocket.send(message);
+}
+
+function closeSocket() {
+    webSocket.close();
+}
+
+function writeResponse(text) {
+    messages.innerHTML += "<br/>" + text;
+}
+
+
+// Connect to signaling server
+var socket = io.connect("http://localhost:8181");
+
+
+
+
+
+
 // Server-mediated message exchanging...
 // 1. Server-->Client...
 // Handle 'created' message coming back from server:
 // this peer is the initiator
-socket.on('created', function(room) {
+function onCreated(){
     console.log('Created room ' + room);
     isInitiator = true;
     // Call getUserMedia()
     navigator.getUserMedia(constraints, handleUserMedia, handleUserMediaError);
     console.log('Getting user media with constraints', constraints);
     checkAndStart();
-});
+}
+
 // Handle 'full' message coming back from server:
 // this peer arrived too late :-(
 socket.on('full', function(room) {
@@ -182,15 +232,7 @@ socket.on('message', function(message) {
         handleRemoteHangup();
     }
 });
-// Send message to the other peer via the signaling server
-function sendMessage(message) {
-    console.log('Sending message: ', message);
-    var mex = {
-        message : message,
-        room : room
-    };
-    socket.emit('message', mex);
-}
+
 // Channel negotiation trigger function
 function checkAndStart() {
     if (!isStarted && typeof localStream != 'undefined' && isChannelReady) {
