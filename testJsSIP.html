@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+ 
+<html>
+    <head>
+        <title>Echo Chamber</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+    </head>
+    <body>
+       
+        <div>
+            <input type="text" id="messageinput"/>
+        </div>
+        <div>
+            <button type="button" onclick="openSocket();" >Open</button>
+            <button type="button" onclick="send();" >Send</button>
+            <button type="button" onclick="closeSocket();" >Close</button>
+        </div>
+        <!-- Server responses get written here -->
+        <div id="messages"></div>
+       
+       <script src="js/jssip.js"></script>
+       <!-- Script to utilise the WebSocket -->
+        <script type="text/javascript">
+                       
+            /*var configuration = {
+              'ws_servers': 'ws://zistasip.zipitchat.com.my',
+              'uri': 'SS_c1d800a79e2085276834a91f9b8c6aa04d50e2b7@zistasip.zipitchat.com.my',
+              'password': 'evqdBKFcJmbz_Tsj'
+            };*/
+
+            var configuration = {
+              ws_servers: 'ws://tryit.jssip.net:10443',
+              uri: 'sip:letrungvi@sip.com',
+              password: '123456'
+            };
+
+            /*var configuration = {
+              'ws_servers': 'ws://tryit.jssip.net:10443',
+              'uri': '6d78c0d5@tryit.jssip.net',
+            };*/
+           
+           
+            function openSocket(){
+                console.log("dasdasdasdasdasdasdasd");
+                try {
+                  var ua = new JsSIP.UA(configuration);
+                  ua.start();
+                } catch(e) {
+                  console.log("ERRORRRRRRRRRRRRRRRRRRRRR");
+                  return;
+                }
+            }
+           
+            /**
+             * Sends the value of the text input to the server
+             */
+            function send(){
+                var text = document.getElementById("messageinput").value;
+                webSocket.send(text);
+            }
+           
+            function closeSocket(){
+                webSocket.close();
+            }
+ 
+            function writeResponse(text){
+                messages.innerHTML += "<br/>" + text;
+            }
+           
+        </script>
+        <!-- Script to utilise the WebSocket -->
+        <!--<script type="text/javascript">
+                       
+            var var configuration = {
+              'ws_servers': 'ws://zistasip.zipitchat.com.my',
+              'uri': 'sip:SS_c1d800a79e2085276834a91f9b8c6aa04d50e2b7@zistasip.zipitchat.com.my',
+              'password': 'evqdBKFcJmbz_Tsj'
+            };
+           
+           
+            function openSocket(){
+                console.log("dasdasdasdasdasdasdasd");
+                try {
+                  var ua = new JsSIP.UA(configuration);
+                } catch(e) {
+                  console.log("dasdasdasdasdasdasdasd");
+                  return;
+                }
+            }
+            function send(){
+
+            }
+            function closeSocket(){
+
+            }
+        </script>-->
+       
+    </body>
+</html>
