@@ -50,27 +50,22 @@ var pc_constraints = {
     } ]
 };
 var sdpConstraints = {};
+
+//START SOCKET
+openSocket();
 // Let's get started: prompt user for input (room name)
 var room = prompt('Enter room name:');
 
-// Connect to signaling server
-// Ensures only one connection is open at a time
-if (webSocket !== undefined && webSocket.readyState !== WebSocket.CLOSED) {
-    writeResponse("WebSocket is already opened.");
-    return;
-}
-// Create a new instance of the websocket
-webSocket = new WebSocket("ws://localhost:8080/websocketsdemo/rtcserver");
 
 // Send 'Create or join' message to singnaling server
 if (room !== '') {
     console.log('Create or join room', room);
-    var message = {
+    var messageObj = {
         type : "create or join",
         room : room,
-        message : ""
+        message : "Create or Join!!!"
     }
-    sendMessage(message);
+    sendMessage(messageObj);
 }
 
 // Set getUserMedia constraints
@@ -79,22 +74,15 @@ var constraints = {
     audio : true
 };
 
-// From this point on, execution proceeds based on asynchronous events...
-// getUserMedia() handlers...
-function handleUserMedia(stream) {
-    localStream = stream;
-    attachMediaStream(localVideo, stream);
-    console.log('Adding local stream.');
-    var message = {
-        type : message,
-        message : "got user media"
-    }
-}
-function handleUserMediaError(error) {
-    console.log('navigator.getUserMedia error: ', error);
-}
-
 function openSocket() {
+    // Ensures only one connection is open at a time
+    if (webSocket !== undefined && webSocket.readyState !== WebSocket.CLOSED) {
+        writeResponse("WebSocket is already opened.");
+        return;
+    }
+    // Connect to signaling server
+    // Create a new instance of the websocket
+    webSocket = new WebSocket("ws://localhost:8080/websocketsdemo/rtcserver");
     /**
      * Binds functions to the listeners for the websocket.
      */
@@ -112,25 +100,25 @@ function openSocket() {
         var obj = JSON.parse(data.event);
         switch(obj.type){
             case "created" :
-                //dasdasd
+                onCreated(obj.message);
                 break;
             case "full" :
-                //
+                onFull(obj.message);
                 break;
             case "joined" :
-                //
+                onJoined(obj.message);
                 break;
             case "join" :
-                //
+                onJoin(obj.message);
                 break;
             case "log" :
-                //
+                onLog();
                 break;
-            case: "message" :
-                //
+            case "message" :
+                onMessage(obj.message);
                 break;
             default :
-                //asdasd
+                console.log('Something wrong!!!');
         }
         writeResponse(event.data);
     };
@@ -143,7 +131,7 @@ function openSocket() {
 /**
  * Sends the value of the text input to the server
  */
-function send() {
+function sendX() {
     var text = document.getElementById("messageinput").value;
     webSocket.send(text);
 }
@@ -151,7 +139,11 @@ function send() {
 // Send message to the other peer via the signaling server
 function sendMessage(message) {
     console.log('Sending message: ', message);
-    websocket.send(message);
+    //var mesObj = {
+    //    type: type,
+    //    message: message
+    //};
+    websocket.send(JSON.stringify(message));
 }
 
 function closeSocket() {
@@ -164,18 +156,29 @@ function writeResponse(text) {
 
 
 // Connect to signaling server
-var socket = io.connect("http://localhost:8181");
+//var socket = io.connect("http://localhost:8181");
 
-
-
-
-
+// From this point on, execution proceeds based on asynchronous events...
+// getUserMedia() handlers...
+function handleUserMedia(stream) {
+    localStream = stream;
+    attachMediaStream(localVideo, stream);
+    console.log('Adding local stream.');
+    var messageObj = {
+        type : "message",
+        message : "got user media"
+    }
+    sendMessage(messageObj);
+}
+function handleUserMediaError(error) {
+    console.log('navigator.getUserMedia error: ', error);
+}
 
 // Server-mediated message exchanging...
 // 1. Server-->Client...
 // Handle 'created' message coming back from server:
 // this peer is the initiator
-function onCreated(){
+function onCreated(room){
     console.log('Created room ' + room);
     isInitiator = true;
     // Call getUserMedia()
@@ -186,13 +189,13 @@ function onCreated(){
 
 // Handle 'full' message coming back from server:
 // this peer arrived too late :-(
-function onFull(){
+function onFull(room){
     console.log('Room ' + room + ' is full');
 }
 
 // Handle 'join' message coming back from server:
 // another peer is joining the channel
-function onJoin(){
+function onJoin(room){
     console.log('Another peer made a request to join room ' + room);
     console.log('This peer is the initiator of room ' + room + '!');
     isChannelReady = true;
@@ -200,7 +203,7 @@ function onJoin(){
 
 // Handle 'joined' message coming back from server:
 // this is the second peer joining the channel
-function onJoined(){
+function onJoined(room){
     console.log('This peer has joined room ' + room);
     isChannelReady = true;
     // Call getUserMedia()
@@ -214,10 +217,7 @@ function onLog(){
 }
 
 // Receive message from the other peer via the signaling server
-function onMessage(){
-    
-}
-socket.on('message', function(message) {
+function onMessage(message){
     console.log('Received message:', message);
     if (message === 'got user media') {
         checkAndStart();
@@ -238,7 +238,7 @@ socket.on('message', function(message) {
     } else if (message === 'bye' && isStarted) {
         handleRemoteHangup();
     }
-});
+}
 
 // Channel negotiation trigger function
 function checkAndStart() {
@@ -293,7 +293,7 @@ function sendData() {
         receiveChannel.send(data);
     trace('Sent data: ' + data);
 }
-// Handlers...
+// Handlers...--DONE
 function gotReceiveChannel(event) {
     trace('Receive Channel Callback');
     receiveChannel = event.channel;
@@ -333,16 +333,27 @@ function handleReceiveChannelStateChange() {
         sendButton.disabled = true;
     }
 }
-// ICE candidates management
+// ICE candidates management --DONE
 function handleIceCandidate(event) {
     console.log('handleIceCandidate event: ', event);
     if (event.candidate) {
-        sendMessage({
+        var messageObj = {
+            type: "message",
+            room: room,
+            message: {
+                type : 'candidate',
+                label : event.candidate.sdpMLineIndex,
+                id : event.candidate.sdpMid,
+                candidate : event.candidate.candidate
+            }
+        };
+        sendMessage(messageObj);
+        /*sendMessage({
             type : 'candidate',
             label : event.candidate.sdpMLineIndex,
             id : event.candidate.sdpMid,
             candidate : event.candidate.candidate
-        });
+        });*/
     } else {
         console.log('End of candidates.');
     }
@@ -352,28 +363,37 @@ function doCall() {
     console.log('Creating Offer...');
     pc.createOffer(setLocalAndSendMessage, onSignalingError, sdpConstraints);
 }
-// Signaling error handler
-function onSignalingError(error) {
-    console.log('Failed to create signaling message : ' + error.name);
-}
+
 // Create Answer
 function doAnswer() {
     console.log('Sending answer to peer.');
     pc.createAnswer(setLocalAndSendMessage, onSignalingError, sdpConstraints);
 }
+
+// Signaling error handler
+function onSignalingError(error) {
+    console.log('Failed to create signaling message : ' + error.name);
+}
 // Success handler for both createOffer()
 // and createAnswer()
 function setLocalAndSendMessage(sessionDescription) {
     pc.setLocalDescription(sessionDescription);
-    sendMessage(sessionDescription);
+    var messageObj = {
+        type: "message",
+        room: room,
+        message: sessionDescription
+    };
+    sendMessage(messageObj);
+    //sendMessage(sessionDescription);
 }
-// Remote stream handlers...
+// Remote stream handlers...--DONE
 function handleRemoteStreamAdded(event) {
     console.log('Remote stream added.');
     attachMediaStream(remoteVideo, event.stream);
     console.log('Remote stream attached!!.');
     remoteStream = event.stream;
 }
+//--DONE
 function handleRemoteStreamRemoved(event) {
     console.log('Remote stream removed. Event: ', event);
 }
@@ -381,7 +401,12 @@ function handleRemoteStreamRemoved(event) {
 function hangup() {
     console.log('Hanging up.');
     stop();
-    sendMessage('bye');
+    var messageObj = {
+        type: "message",
+        room: room,
+        message: "bye"
+    };
+    sendMessage(messageObj);
 }
 function handleRemoteHangup() {
     console.log('Session terminated.');

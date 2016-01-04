@@ -30,12 +30,12 @@ public class WebRTCServer {
     @OnOpen
     public void onOpen(Session session) {
         System.out.println(session.getId() + " has opened a connection");
-        try {
+        /*try {
             sessionList.add(session);
             session.getBasicRemote().sendText("Connection Established");
         } catch (IOException ex) {
             ex.printStackTrace();
-        }
+        }*/
     }
 
     /**
@@ -47,7 +47,10 @@ public class WebRTCServer {
     public void onMessage(String message, Session sender) {
         JSONObject obj = new JSONObject(message);
         String type = obj.getString("type");
-        String roomName = obj.getString("room");
+        String roomName = "";
+        if(obj.has("room")){
+            roomName = obj.getString("room");
+        }
         String mes = obj.getString("message");
         switch (type) {
         case MessageTypeConstants.CREATEORJOIN:
@@ -57,7 +60,7 @@ public class WebRTCServer {
             onMessages(roomName, mes, sender);
             break;
         default:
-            break;
+            // break;
         }
         System.out
                 .println("Message from ID-" + sender.getId() + ": " + message);
@@ -91,13 +94,6 @@ public class WebRTCServer {
     }
 
     public void onCreateOrJoin(String roomName, Session sender) {
-        // log('S --> Room ' + room + ' has ' + numClients + ' client(s)');
-        int numClients = roomList.get(roomName).size();
-        sendToSender(MessageTypeConstants.LOG, "S --> Room" + roomName + "has"
-                + numClients + "client(s)", sender);
-        // log('S --> Request to create or join room', room);
-        sendToSender(MessageTypeConstants.LOG,
-                "S --> Request to create or join room: " + roomName, sender);
         if (!roomList.containsKey(roomName)) {
             // create new room
             Set<Session> sessionList = new HashSet<>();
@@ -105,8 +101,15 @@ public class WebRTCServer {
             roomList.put(roomName, sessionList);
             sendToSender(MessageTypeConstants.CREATED, roomName, sender);
         } else {
+         // log('S --> Room ' + room + ' has ' + numClients + ' client(s)');
+            int numClients = roomList.get(roomName).size();
+            sendToSender(MessageTypeConstants.LOG, "S --> Room" + roomName + "has"
+                    + numClients + "client(s)", sender);
+            // log('S --> Request to create or join room', room);
+            sendToSender(MessageTypeConstants.LOG,
+                    "S --> Request to create or join room: " + roomName, sender);
             Set<Session> sessionList = roomList.get(roomName);
-            if (sessionList.size() == 2) {
+            if (numClients == 2) {
                 // full
                 sendToSender(MessageTypeConstants.FULL, roomName + "is full",
                         sender);
@@ -125,14 +128,15 @@ public class WebRTCServer {
         // log('S --> got message: ', message.message);
         sendToSender(MessageTypeConstants.LOG, "S --> got message: " + message,
                 sender);
-        sendToClientInRoomExceptSender(MessageTypeConstants.MESSAGE, roomName, message, sender);
+        sendToClientInRoomExceptSender(MessageTypeConstants.MESSAGE, roomName,
+                message, sender);
     }
 
     public void sendToSender(String type, String message, Session sender) {
-        String messageToCaller = "{'type':'" + type + "','message':'" + message
-                + "'}";
+        String messageToSender = "{\"type\":\"" + type + "\",\"message\":\""
+                + message + "\"}";
         try {
-            sender.getBasicRemote().sendText(messageToCaller);
+            sender.getBasicRemote().sendText(messageToSender);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -144,8 +148,8 @@ public class WebRTCServer {
         Set<Session> sessionList = roomList.get(roomName);
         for (Session s : sessionList) {
             if (!s.equals(sender)) {
-                String messageToCallee = "{'type':'" + type + "','message':'"
-                        + message + "'}";
+                String messageToCallee = "{\"type\":\"" + type
+                        + "\",\"message\":\"" + message + "\"}";
                 try {
                     s.getBasicRemote().sendText(messageToCallee);
                 } catch (IOException e) {
