@@ -1,7 +1,6 @@
 package websocketsdemo;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -19,8 +18,8 @@ import org.json.JSONObject;
 @ServerEndpoint("/echo")
 public class EchoServer {
 
-    private static final Set<Session> sessionList = Collections
-            .synchronizedSet(new HashSet<Session>());
+    // private static final Set<Session> sessionList = Collections
+    // .synchronizedSet(new HashSet<Session>());
     private static Map<String, Set<Session>> roomList = new HashMap<>();
 
     /**
@@ -73,7 +72,8 @@ public class EchoServer {
 
     @OnError
     public void onError(Throwable exception, Session session) {
-        sessionList.remove(session);
+        // sessionList.remove(session);
+        removeSessionFromChannel(session);
         System.out.println("Broken pipe");
     }
 
@@ -84,7 +84,8 @@ public class EchoServer {
      */
     @OnClose
     public void onClose(Session session) throws Exception {
-        sessionList.remove(session);
+        // sessionList.remove(session);
+        removeSessionFromChannel(session);
         System.out.println("Session " + session.getId() + " has ended");
     }
 
@@ -95,33 +96,33 @@ public class EchoServer {
             Set<Session> sessionList = new HashSet<>();
             sessionList.add(sender);
             roomList.put(roomName, sessionList);
-            sendToSender(MessageTypeConstants.CREATED, roomName, sender);
+            sendToSender(MessageTypeConstants.CREATED, "ID-" + sender.getId()
+                    + " created channel: " + roomName, sender);
         } else {
-            // log('S --> Room ' + room + ' has ' + numClients + ' client(s)');
             int numClients = roomList.get(roomName).size();
             sendToSender(MessageTypeConstants.LOG, "S --> Room" + roomName
                     + "has" + numClients + "client(s)", sender);
-            // log('S --> Request to create or join room', room);
             sendToSender(MessageTypeConstants.LOG,
                     "S --> Request to create or join room: " + roomName, sender);
             Set<Session> sessionList = roomList.get(roomName);
-            if (numClients == 2) {
+            if (numClients >= 2) {
                 // full
-                sendToSender(MessageTypeConstants.FULL, roomName + "is full",
-                        sender);
+                sendToSender(MessageTypeConstants.FULL, "Channel " + roomName
+                        + "is full", sender);
             } else {
                 // join
                 sessionList.add(sender);
-                sendToSender(MessageTypeConstants.JOINED, roomName, sender);
+                sendToSender(MessageTypeConstants.JOINED, "Joined channel "
+                        + roomName, sender);
                 sendToClientInRoomExceptSender(MessageTypeConstants.JOIN,
-                        roomName, roomName, sender);
+                        roomName, "ID-" + sender.getId() + "joined channel "
+                                + roomName, sender);
             }
         }
 
     }
 
     public void onMessages(String roomName, String message, Session sender) {
-        // log('S --> got message: ', message.message);
         sendToSender(MessageTypeConstants.LOG, "S --> got message: " + message,
                 sender);
         sendToSender(MessageTypeConstants.MESSAGE, message, sender);
@@ -130,8 +131,9 @@ public class EchoServer {
     }
 
     public void sendToSender(String type, String message, Session sender) {
-        String messageToSender = "{\"type\":\"" + type + "\",\"message\":\""
-                + message + "\"}";
+        JSONObject messageObj = new JSONObject().put("type", type).put(
+                "message", message);
+        String messageToSender = messageObj.toString();
         try {
             sender.getBasicRemote().sendText(messageToSender);
         } catch (IOException e) {
@@ -145,8 +147,9 @@ public class EchoServer {
         Set<Session> sessionList = roomList.get(roomName);
         for (Session s : sessionList) {
             if (!s.equals(sender)) {
-                String messageToCallee = "{\"type\":\"" + type
-                        + "\",\"message\":\"" + message + "\"}";
+                JSONObject messageObj = new JSONObject().put("type", type).put(
+                        "message", message);
+                String messageToCallee = messageObj.toString();
                 try {
                     s.getBasicRemote().sendText(messageToCallee);
                 } catch (IOException e) {
@@ -162,6 +165,10 @@ public class EchoServer {
     }
 
     public void sendInRoom(String message) {
+
+    }
+
+    public void removeSessionFromChannel(Session session) {
 
     }
 

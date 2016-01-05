@@ -18,8 +18,8 @@ import org.json.JSONObject;
 
 @ServerEndpoint("/rtcserver")
 public class WebRTCServer {
-    private static final Set<Session> sessionList = Collections
-            .synchronizedSet(new HashSet<Session>());
+    // private static final Set<Session> sessionList = Collections
+    // .synchronizedSet(new HashSet<Session>());
     private static Map<String, Set<Session>> roomList = new HashMap<>();
 
     /**
@@ -30,12 +30,11 @@ public class WebRTCServer {
     @OnOpen
     public void onOpen(Session session) {
         System.out.println(session.getId() + " has opened a connection");
-        /*try {
-            sessionList.add(session);
-            session.getBasicRemote().sendText("Connection Established");
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }*/
+        /*
+         * try { sessionList.add(session);
+         * session.getBasicRemote().sendText("Connection Established"); } catch
+         * (IOException ex) { ex.printStackTrace(); }
+         */
     }
 
     /**
@@ -48,7 +47,7 @@ public class WebRTCServer {
         JSONObject obj = new JSONObject(message);
         String type = obj.getString("type");
         String roomName = obj.getString("room");
-        //String mes = obj.getString("message");
+        // String mes = obj.getString("message");
         String mes = obj.get("message").toString();
         System.out.println("MESAGE: " + mes);
         switch (type) {
@@ -63,21 +62,18 @@ public class WebRTCServer {
         }
         System.out
                 .println("Message from ID-" + sender.getId() + ": " + message);
-        try {
-            for (Session s : sessionList) {
-                s.getBasicRemote().sendText(
-                        "Message from ID-" + sender.getId() + ": " + message);
-                // s.getBasicRemote().
-            }
-            // session.getBasicRemote().sendText(message);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
+        /*
+         * try { for (Session s : sessionList) { s.getBasicRemote().sendText(
+         * "Message from ID-" + sender.getId() + ": " + message); //
+         * s.getBasicRemote(). } // session.getBasicRemote().sendText(message);
+         * } catch (IOException ex) { ex.printStackTrace(); }
+         */
     }
 
     @OnError
     public void onError(Throwable exception, Session session) {
-        sessionList.remove(session);
+        // sessionList.remove(session);
+        removeSessionFromChannel(session);
         System.out.println("Broken pipe");
     }
 
@@ -88,7 +84,8 @@ public class WebRTCServer {
      */
     @OnClose
     public void onClose(Session session) throws Exception {
-        sessionList.remove(session);
+        // sessionList.remove(session);
+        removeSessionFromChannel(session);
         System.out.println("Session " + session.getId() + " has ended");
     }
 
@@ -100,11 +97,9 @@ public class WebRTCServer {
             roomList.put(roomName, sessionList);
             sendToSender(MessageTypeConstants.CREATED, roomName, sender);
         } else {
-         // log('S --> Room ' + room + ' has ' + numClients + ' client(s)');
             int numClients = roomList.get(roomName).size();
-            sendToSender(MessageTypeConstants.LOG, "S --> Room" + roomName + "has"
-                    + numClients + "client(s)", sender);
-            // log('S --> Request to create or join room', room);
+            sendToSender(MessageTypeConstants.LOG, "S --> Room" + roomName
+                    + "has" + numClients + "client(s)", sender);
             sendToSender(MessageTypeConstants.LOG,
                     "S --> Request to create or join room: " + roomName, sender);
             Set<Session> sessionList = roomList.get(roomName);
@@ -124,7 +119,6 @@ public class WebRTCServer {
     }
 
     public void onMessages(String roomName, String message, Session sender) {
-        // log('S --> got message: ', message.message);
         sendToSender(MessageTypeConstants.LOG, "S --> got message: " + message,
                 sender);
         sendToClientInRoomExceptSender(MessageTypeConstants.MESSAGE, roomName,
@@ -132,9 +126,18 @@ public class WebRTCServer {
     }
 
     public void sendToSender(String type, String message, Session sender) {
-        String messageToSender = "{\"type\":\"" + type + "\",\"message\":\""
-                + message + "\"}";
+        JSONObject event;
         try {
+            JSONObject messageObj = new JSONObject(message);
+            event = new JSONObject().put("type", type).put("message",
+                    messageObj);
+        } catch (Exception e) {
+            event = new JSONObject().put("type", type).put("message", message);
+        }
+
+        String messageToSender = event.toString();
+        try {
+            System.out.println("MESS to CALLER: " + messageToSender);
             sender.getBasicRemote().sendText(messageToSender);
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -147,9 +150,20 @@ public class WebRTCServer {
         Set<Session> sessionList = roomList.get(roomName);
         for (Session s : sessionList) {
             if (!s.equals(sender)) {
-                String messageToCallee = "{\"type\":\"" + type
-                        + "\",\"message\":\"" + message + "\"}";
+                JSONObject event;
                 try {
+                    JSONObject messageObj = new JSONObject(message);
+                    event = new JSONObject().put("type", type).put("message",
+                            messageObj);
+                } catch (Exception e) {
+                    event = new JSONObject().put("type", type).put("message",
+                            message);
+                }
+                String messageToCallee = event.toString();
+                // String messageToCallee = "{\"type\":\"" + type
+                // + "\",\"message\":\"" + message + "\"}";
+                try {
+                    System.out.println("MESS to CALLEE: " + messageToCallee);
                     s.getBasicRemote().sendText(messageToCallee);
                 } catch (IOException e) {
                     // TODO Auto-generated catch block
@@ -164,6 +178,10 @@ public class WebRTCServer {
     }
 
     public void sendInRoom(String message) {
+
+    }
+
+    public void removeSessionFromChannel(Session session) {
 
     }
 }

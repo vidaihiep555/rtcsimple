@@ -13,7 +13,7 @@
     </div>
     <div>
         <button type="button" onclick="openSocket();" >Open</button>
-        <button type="button" onclick="sendMessage();" >Send</button>
+        <button type="button" id="sendButton" onclick="sendMessage();" >Send</button>
         <button type="button" onclick="closeSocket();" >Close</button>
     </div>
     <!-- Server responses get written here -->
@@ -21,6 +21,8 @@
 
     <!-- Script to utilise the WebSocket -->
     <script type="text/javascript">
+    var sendButton = document.getElementById("sendButton");
+    sendButton.disabled = true;
     var channel;           
     var webSocket;
     var messages = document.getElementById("messages");
@@ -55,21 +57,27 @@
             switch (obj.type) {
                 case "created":
                 console.log('Created');
+                writeResponse(obj.message);
+                sendButton.disabled = false;
                 break;
                 case "full":
                 console.log('Channel is full');
+                writeResponse(obj.message);
                 break;
                 case "joined":
                 console.log('Someone join');
+                writeResponse(obj.message);
+                sendButton.disabled = false;
                 break;
                 case "join":
                 console.log('Join');
+                writeResponse(obj.message);
                 break;
                 case "log":
                 console.log('Log');
                 break;
                 case "message":
-                writeResponse(event.data);
+                writeResponse(obj.message);
                 break;
                 default:
                 console.log('Something wrong!!!');
@@ -79,6 +87,7 @@
 
         webSocket.onclose = function(event) {
             writeResponse("Connection closed");
+            sendButton.disabled = true;
         };
 
         channel = prompt('Enter channel name:');
