@@ -47,11 +47,10 @@ public class WebRTCServer {
     public void onMessage(String message, Session sender) {
         JSONObject obj = new JSONObject(message);
         String type = obj.getString("type");
-        String roomName = "";
-        if(obj.has("room")){
-            roomName = obj.getString("room");
-        }
-        String mes = obj.getString("message");
+        String roomName = obj.getString("room");
+        //String mes = obj.getString("message");
+        String mes = obj.get("message").toString();
+        System.out.println("MESAGE: " + mes);
         switch (type) {
         case MessageTypeConstants.CREATEORJOIN:
             onCreateOrJoin(roomName, sender);

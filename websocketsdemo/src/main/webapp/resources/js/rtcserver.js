@@ -97,7 +97,8 @@ function openSocket() {
     };
 
     webSocket.onmessage = function(event) {
-        var obj = JSON.parse(data.event);
+        console.log(event.data)
+        var obj = JSON.parse(event.data);
         switch(obj.type){
             case "created" :
                 onCreated(obj.message);
@@ -143,7 +144,7 @@ function sendMessage(message) {
     //    type: type,
     //    message: message
     //};
-    websocket.send(JSON.stringify(message));
+    webSocket.send(JSON.stringify(message));
 }
 
 function closeSocket() {
@@ -151,7 +152,7 @@ function closeSocket() {
 }
 
 function writeResponse(text) {
-    messages.innerHTML += "<br/>" + text;
+    //messages.innerHTML += "<br/>" + text;
 }
 
 
@@ -166,6 +167,7 @@ function handleUserMedia(stream) {
     console.log('Adding local stream.');
     var messageObj = {
         type : "message",
+        room: room,
         message : "got user media"
     }
     sendMessage(messageObj);
