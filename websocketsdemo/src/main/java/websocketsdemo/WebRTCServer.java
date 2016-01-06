@@ -62,12 +62,6 @@ public class WebRTCServer {
         }
         System.out
                 .println("Message from ID-" + sender.getId() + ": " + message);
-        /*
-         * try { for (Session s : sessionList) { s.getBasicRemote().sendText(
-         * "Message from ID-" + sender.getId() + ": " + message); //
-         * s.getBasicRemote(). } // session.getBasicRemote().sendText(message);
-         * } catch (IOException ex) { ex.printStackTrace(); }
-         */
     }
 
     @OnError
@@ -103,7 +97,7 @@ public class WebRTCServer {
             sendToSender(MessageTypeConstants.LOG,
                     "S --> Request to create or join room: " + roomName, sender);
             Set<Session> sessionList = roomList.get(roomName);
-            if (numClients == 2) {
+            if (numClients >= 2) {
                 // full
                 sendToSender(MessageTypeConstants.FULL, roomName + "is full",
                         sender);
@@ -160,8 +154,6 @@ public class WebRTCServer {
                             message);
                 }
                 String messageToCallee = event.toString();
-                // String messageToCallee = "{\"type\":\"" + type
-                // + "\",\"message\":\"" + message + "\"}";
                 try {
                     System.out.println("MESS to CALLEE: " + messageToCallee);
                     s.getBasicRemote().sendText(messageToCallee);

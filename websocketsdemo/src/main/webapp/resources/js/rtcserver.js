@@ -218,7 +218,6 @@ function onLog(){
     //console.log.apply(console, array);
 }
 
-//FIXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // Receive message from the other peer via the signaling server
 function onMessage(message){
     console.log('Received message:', message);

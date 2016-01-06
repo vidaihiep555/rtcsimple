@@ -7,5 +7,6 @@ public class MessageTypeConstants {
     public static final String JOIN = "join";
     public static final String JOINED = "joined";
     public static final String FULL = "full";
+    public static final String LEAVE = "leave";
     public static final String MESSAGE = "message";
 }

@@ -35,8 +35,8 @@
            return;
        }
         // Create a new instance of the websocket
-        //webSocket = new WebSocket("ws://54.254.156.78:8080/websocketsdemo/echo");
-        webSocket = new WebSocket("ws://localhost:8080/websocketsdemo/echo");
+        webSocket = new WebSocket("ws://54.254.156.78:8080/websocketsdemo/echo");
+        //webSocket = new WebSocket("ws://localhost:8080/websocketsdemo/echo");
 
         /**
          * Binds functions to the listeners for the websocket.
@@ -65,12 +65,12 @@
                 writeResponse(obj.message);
                 break;
                 case "joined":
-                console.log('Someone join');
+                console.log('Join');
                 writeResponse(obj.message);
                 sendButton.disabled = false;
                 break;
                 case "join":
-                console.log('Join');
+                console.log('Some one join');
                 writeResponse(obj.message);
                 break;
                 case "log":

@@ -54,20 +54,16 @@ public class EchoServer {
             onCreateOrJoin(roomName, sender);
             break;
         case MessageTypeConstants.MESSAGE:
-            onMessages(roomName, "Message from ID-" + sender.getId() + ": "
-                    + mes, sender);
+            onMessages(roomName, mes, sender);
+            break;
+        case MessageTypeConstants.LEAVE:
+            onLeave(roomName, mes, sender);
             break;
         default:
             // break;
         }
         System.out
                 .println("Message from ID-" + sender.getId() + ": " + message);
-        /*
-         * try { for (Session s : sessionList) { s.getBasicRemote().sendText(
-         * "Message from ID-" + sender.getId() + ": " + message); } //
-         * session.getBasicRemote().sendText(message); } catch (IOException ex)
-         * { ex.printStackTrace(); }
-         */
     }
 
     @OnError
@@ -96,43 +92,54 @@ public class EchoServer {
             Set<Session> sessionList = new HashSet<>();
             sessionList.add(sender);
             roomList.put(roomName, sessionList);
-            sendToSender(MessageTypeConstants.CREATED, "ID-" + sender.getId()
-                    + " created channel: " + roomName, sender);
+            sendToSender(MessageTypeConstants.CREATED, roomName,
+                    "ID-" + sender.getId() + " created channel: " + roomName,
+                    sender);
         } else {
             int numClients = roomList.get(roomName).size();
-            sendToSender(MessageTypeConstants.LOG, "S --> Room" + roomName
-                    + "has" + numClients + "client(s)", sender);
-            sendToSender(MessageTypeConstants.LOG,
+            sendToSender(MessageTypeConstants.LOG, roomName, "S --> Room"
+                    + roomName + "has" + numClients + "client(s)", sender);
+            sendToSender(MessageTypeConstants.LOG, roomName,
                     "S --> Request to create or join room: " + roomName, sender);
             Set<Session> sessionList = roomList.get(roomName);
             if (numClients >= 2) {
                 // full
-                sendToSender(MessageTypeConstants.FULL, "Channel " + roomName
-                        + "is full", sender);
+                sendToSender(MessageTypeConstants.FULL, roomName, "Channel "
+                        + roomName + "is full", sender);
             } else {
                 // join
                 sessionList.add(sender);
-                sendToSender(MessageTypeConstants.JOINED, "Joined channel "
-                        + roomName, sender);
+                sendToSender(MessageTypeConstants.JOINED, roomName,
+                        "Joined channel " + roomName, sender);
                 sendToClientInRoomExceptSender(MessageTypeConstants.JOIN,
                         roomName, "ID-" + sender.getId() + "joined channel "
                                 + roomName, sender);
             }
         }
-
     }
 
     public void onMessages(String roomName, String message, Session sender) {
-        sendToSender(MessageTypeConstants.LOG, "S --> got message: " + message,
-                sender);
-        sendToSender(MessageTypeConstants.MESSAGE, message, sender);
+        // sendToSender(MessageTypeConstants.LOG, "S --> got message: " +
+        // message,
+        // sender);
+        sendToSender(MessageTypeConstants.MESSAGE, roomName, message, sender);
         sendToClientInRoomExceptSender(MessageTypeConstants.MESSAGE, roomName,
                 message, sender);
     }
 
-    public void sendToSender(String type, String message, Session sender) {
-        JSONObject messageObj = new JSONObject().put("type", type).put(
-                "message", message);
+    public void onLeave(String roomName, String message, Session sender) {
+        Set<Session> sessionList = roomList.get(roomName);
+        sessionList.remove(sender);
+        sendToSender(MessageTypeConstants.LEAVE, roomName,
+                "ID-" + sender.getId() + " has left", sender);
+        sendToClientInRoomExceptSender(MessageTypeConstants.LEAVE, roomName,
+                "ID-" + sender.getId() + " has left", sender);
+    }
+
+    public void sendToSender(String type, String roomName, String message,
+            Session sender) {
+        JSONObject messageObj = new JSONObject().put("type", type)
+                .put("channel", roomName).put("message", message);
         String messageToSender = messageObj.toString();
         try {
             sender.getBasicRemote().sendText(messageToSender);
@@ -147,8 +154,8 @@ public class EchoServer {
         Set<Session> sessionList = roomList.get(roomName);
         for (Session s : sessionList) {
             if (!s.equals(sender)) {
-                JSONObject messageObj = new JSONObject().put("type", type).put(
-                        "message", message);
+                JSONObject messageObj = new JSONObject().put("type", type)
+                        .put("channel", roomName).put("message", message);
                 String messageToCallee = messageObj.toString();
                 try {
                     s.getBasicRemote().sendText(messageToCallee);
@@ -169,7 +176,10 @@ public class EchoServer {
     }
 
     public void removeSessionFromChannel(Session session) {
-
+        for (Map.Entry<String, Set<Session>> e : roomList.entrySet()) {
+            Set<Session> sessionList = e.getValue();
+            sessionList.remove(session);
+        }
     }
 
 }
