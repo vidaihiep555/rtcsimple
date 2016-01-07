@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+ 
+<html>
+    <head>
+        <title>Echo Chamber</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+    </head>
+    <body>
+       
+        <div>
+            <input type="text" id="messageinput"/>
+        </div>
+        <div>
+            <button type="button" onclick="openSocket();" >Open</button>
+            <button type="button" onclick="send();" >Send</button>
+            <button type="button" onclick="closeSocket();" >Close</button>
+        </div>
+        <!-- Server responses get written here -->
+        <div id="messages"></div>
+        <script type="text/javascript" src="js/jssip.js"></script>
+       
+        <!-- Script to utilise the WebSocket -->
+        <script type="text/javascript">
+                       
+            var webSocket;
+            var messages = document.getElementById("messages");
+           
+           
+            function openSocket(){
+
+                var configuration = {
+                    'ws_servers': 'wss://tryit.areteasea.com:8081',
+                    'uri': 'sip:demonstration@iptel.org',
+                    'password': 'd3m0nstr4t10n',
+                    'register': false
+                };
+
+                var ua = new JsSIP.UA(configuration);
+                ua.start();
+
+                if (ua.isRegistered())
+                    ua.unregister();
+                else
+                    ua.register();
+            }
+           
+            /**
+             * Sends the value of the text input to the server
+             */
+            function send(){
+                var text = document.getElementById("messageinput").value;
+                webSocket.send(text);
+            }
+           
+            function closeSocket(){
+                webSocket.close();
+            }
+ 
+            function writeResponse(text){
+                messages.innerHTML += "<br/>" + text;
+            }
+           
+        </script>
+       
+    </body>
+</html>

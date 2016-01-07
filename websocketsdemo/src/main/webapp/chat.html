@@ -13,7 +13,9 @@
     </div>
     <div>
         <button type="button" onclick="openSocket();" >Open</button>
+        <button type="button" onclick="createChannel();" >Create Channel</button>
         <button type="button" id="sendButton" onclick="sendMessage();" >Send</button>
+        <button type="button" onclick="leaveChannel();" >Leave Channel</button>
         <button type="button" onclick="closeSocket();" >Close</button>
     </div>
     <!-- Server responses get written here -->
@@ -79,6 +81,9 @@
                 case "message":
                 writeResponse(obj.message);
                 break;
+                case "leave":
+                writeResponse(obj.message);
+                break;
                 default:
                 console.log('Something wrong!!!');
             }
@@ -88,8 +93,10 @@
         webSocket.onclose = function(event) {
             writeResponse("Connection closed");
             sendButton.disabled = true;
-        };
+        }; 
+    }
 
+    function createChannel(){
         channel = prompt('Enter channel name:');
         send("create or join", channel, "Create or Join!!!");
     }
@@ -111,6 +118,10 @@
     function sendMessage() {
         var message = document.getElementById("messageinput").value;
         send("message", channel, message);
+    }
+
+    function leaveChannel(){
+        send("leave", channel, "Leave Channel!!!");
     }
 
     function closeSocket() {

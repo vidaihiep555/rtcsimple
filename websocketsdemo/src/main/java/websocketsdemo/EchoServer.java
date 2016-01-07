@@ -30,6 +30,7 @@ public class EchoServer {
     @OnOpen
     public void onOpen(Session session) {
         System.out.println(session.getId() + " has opened a connection");
+        // sendToSender(type, roomName, message, sender);
         /*
          * try { sessionList.add(session);
          * session.getBasicRemote().sendText("Connection Established"); } catch
@@ -44,17 +45,24 @@ public class EchoServer {
      */
     @OnMessage
     public void onMessage(String message, Session sender) {
-        System.out.println("XXX: " + message);
+        // System.out.println("XXX: " + message);
         JSONObject obj = new JSONObject(message);
         String type = obj.getString("type");
         String roomName = obj.getString("channel");
         String mes = obj.getString("message");
         switch (type) {
         case MessageTypeConstants.CREATEORJOIN:
-            onCreateOrJoin(roomName, sender);
+            if (!roomName.equals(""))
+                onCreateOrJoin(roomName, sender);
+            else
+                sendToSender(MessageTypeConstants.ERROR, roomName,
+                        "The channel name is null", sender);
             break;
         case MessageTypeConstants.MESSAGE:
-            onMessages(roomName, mes, sender);
+            Set<Session> sessionList = roomList.get(roomName);
+            if (sessionList != null && sessionList.contains(sender)) {
+                onMessages(roomName, mes, sender);
+            }
             break;
         case MessageTypeConstants.LEAVE:
             onLeave(roomName, mes, sender);
@@ -62,8 +70,8 @@ public class EchoServer {
         default:
             // break;
         }
-        System.out
-                .println("Message from ID-" + sender.getId() + ": " + message);
+        // System.out
+        // .println("Message from ID-" + sender.getId() + ": " + message);
     }
 
     @OnError
@@ -97,10 +105,10 @@ public class EchoServer {
                     sender);
         } else {
             int numClients = roomList.get(roomName).size();
-            sendToSender(MessageTypeConstants.LOG, roomName, "S --> Room"
-                    + roomName + "has" + numClients + "client(s)", sender);
-            sendToSender(MessageTypeConstants.LOG, roomName,
-                    "S --> Request to create or join room: " + roomName, sender);
+            // sendToSender(MessageTypeConstants.LOG, roomName, "S --> Room"
+            // + roomName + "has" + numClients + "client(s)", sender);
+            // sendToSender(MessageTypeConstants.LOG, roomName,
+            // "S --> Request to create or join room: " + roomName, sender);
             Set<Session> sessionList = roomList.get(roomName);
             if (numClients >= 2) {
                 // full
@@ -129,11 +137,16 @@ public class EchoServer {
 
     public void onLeave(String roomName, String message, Session sender) {
         Set<Session> sessionList = roomList.get(roomName);
-        sessionList.remove(sender);
-        sendToSender(MessageTypeConstants.LEAVE, roomName,
-                "ID-" + sender.getId() + " has left", sender);
-        sendToClientInRoomExceptSender(MessageTypeConstants.LEAVE, roomName,
-                "ID-" + sender.getId() + " has left", sender);
+        if(sessionList!=null){
+            sessionList.remove(sender);
+            sendToSender(MessageTypeConstants.LEAVE, roomName,
+                    "ID-" + sender.getId() + " has left", sender);
+            sendToClientInRoomExceptSender(MessageTypeConstants.LEAVE, roomName,
+                    "ID-" + sender.getId() + " has left", sender);
+            if (sessionList.size() == 0)
+                removeChannel(roomName);
+        }
+
     }
 
     public void sendToSender(String type, String roomName, String message,
@@ -180,6 +193,16 @@ public class EchoServer {
             Set<Session> sessionList = e.getValue();
             sessionList.remove(session);
         }
+    }
+
+    public void removeChannel(String roomName) {
+        roomList.remove(roomName);
+    }
+
+    public boolean isChannelAvailable(String roomName) {
+        if (roomList.get(roomName) == null)
+            return false;
+        return true;
     }
 
 }
