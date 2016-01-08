@@ -155,7 +155,7 @@ $(document).ready(function(){
     // JsSIP.UA newRTCSession event listener
     new_call: function(e) {
       var session,
-        call = e.session,
+        call = e.session,//call == _Session now
         uri = call.remote_identity.uri,
         display_name = call.remote_identity.display_name || uri.user;
 
