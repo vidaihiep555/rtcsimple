@@ -29,12 +29,30 @@
            
             function openSocket(){
 
-                var configuration = {
+                /*var configuration = {
                     'ws_servers': 'wss://tryit.areteasea.com:8081',
                     'uri': 'sip:demonstration@iptel.org',
                     'password': 'd3m0nstr4t10n',
                     'register': false
+                };*/
+                /*var configuration = {
+                    'ws_servers': 'wss://localhost:5060',
+                    'uri': 'sip:vivi@localhost',
+                    'password': '12345',
+                    'register': false
+                };*/
+                var configuration = {
+                    'ws_servers': 'wss://sip2sip.info',
+                    'uri': 'sip:viadaihiep555@sip2sip.info',
+                    'password': 'shenlong',
+                    'register': false
                 };
+                /*var configuration = {
+                    'ws_servers': 'wss://zistasip.zipitchat.com.my',
+                    'uri': 'sip:SS_0c537c77acad6484fe81e3e9fdd0e401996d28a9@zistasip.zipitchat.com.my',
+                    'password': 'eE46djCznDQGr0WM',
+                    'register': false
+                };*/
 
                 var ua = new JsSIP.UA(configuration);
                 ua.start();
