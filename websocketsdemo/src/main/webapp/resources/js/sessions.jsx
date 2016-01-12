@@ -178,6 +178,7 @@ var Session = React.createClass({
     //console.log('Tryit: Session::clickDial()');
 
     if (this.state.callStatus === 'incoming') {
+      //call la incoming
       GUI.buttonAnswerClick(this.state.call);
     } else {
       GUI.buttonDialClick(this.state.uri);

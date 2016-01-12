@@ -10,12 +10,6 @@ $(document).ready(function(){
   };
 
   window.GUI = {
-
-    playSound: function(sound_file) {
-      soundPlayer.setAttribute("src", sound_file);
-      soundPlayer.play();
-    },
-
     // Active session collection
     Sessions: [],
 
@@ -67,9 +61,10 @@ $(document).ready(function(){
         }
       }
 
-      GUI.renderSessions();
+      //GUI.renderSessions();
     },
 
+    // get a session object from the session collection based on uri
     getSession: function(uri) {
       console.log('Tryit: getSession');
 
@@ -86,14 +81,14 @@ $(document).ready(function(){
       return session;
     },
 
-    renderSessions: function() {
+    /*renderSessions: function() {
       console.log('Tryit: renderSessions');
       React.render(
         React.createElement(SessionsList, {
             data: GUI.Sessions
           }), document.getElementById('sessions')
       );
-    },
+    },*/
 
     createCompositionIndicator: function(uri) {
       console.log('Tryit: createCompositionIndicator');
@@ -148,12 +143,12 @@ $(document).ready(function(){
         GUI.createSession(uri.user, uri.toAor());
 
         // render it
-        GUI.renderSessions();
+        //GUI.renderSessions();
       }
     },
 
     // JsSIP.UA newRTCSession event listener
-    new_call: function(e) {//e = Object {originator: "remote", session: RTCSession, request: IncomingRequest}
+    new_call: function(e) {//e = Object {originator: "remote", session: RTCSession, request: IncomingRequest} or OutgoingRequest
       var session,
         call = e.session,//call == _Session now//call = RTCSession {ua: UA, status: 4, dialog: null, earlyDialogs: Object, connection: null…}, e = Object {originator: "remote", session: RTCSession, r
         uri = call.remote_identity.uri,
@@ -176,7 +171,7 @@ $(document).ready(function(){
         session.call = call;
       }
 
-      GUI.renderSessions();
+      //GUI.renderSessions();
       GUI.setCallEventHandlers(e);
     },
 
@@ -195,7 +190,7 @@ $(document).ready(function(){
           call.data.remoteCanRenegotiateRTC = true;
         }
 
-        GUI.playSound("sounds/incoming-call2.ogg");
+        //GUI.playSound("sounds/incoming-call2.ogg");
       }
 
       call.on('connecting', function() {
@@ -233,6 +228,7 @@ $(document).ready(function(){
         }
       });
 
+      //remote stream is coming
       call.on('addstream', function(e) {
         console.log('Tryit: addstream()');
         remoteStream = e.stream;
@@ -241,7 +237,7 @@ $(document).ready(function(){
 
       // Failed
       call.on('failed',function(e) {
-        GUI.playSound("sounds/outgoing-call-rejected.wav");
+        //GUI.playSound("sounds/outgoing-call-rejected.wav");
 
         GUI.removeSession(call.remote_identity.uri.toAor());
 
@@ -255,15 +251,15 @@ $(document).ready(function(){
 
       // NewDTMF
       call.on('newDTMF',function(e) {
-        GUI.playSound("sounds/dialpad/" + e.dtmf.tone + ".ogg");
+        //GUI.playSound("sounds/dialpad/" + e.dtmf.tone + ".ogg");
       });
 
       call.on('hold',function(e) {
-        GUI.playSound("sounds/dialpad/pound.ogg");
+        //GUI.playSound("sounds/dialpad/pound.ogg");
       });
 
       call.on('unhold',function(e) {
-        GUI.playSound("sounds/dialpad/pound.ogg");
+        //GUI.playSound("sounds/dialpad/pound.ogg");
       });
 
       // Ended
@@ -361,7 +357,7 @@ $(document).ready(function(){
         // reset isComposing since we are receiving a text message from the peer
         session.isComposing = false;
 
-        GUI.playSound("sounds/incoming-chat.ogg");
+        //GUI.playSound("sounds/incoming-chat.ogg");
       } else if (e.originator === 'local') {
 
         if (e.request.getHeader('content-type').match(/iscomposing/)) {
@@ -381,7 +377,7 @@ $(document).ready(function(){
             text: cause
           });
 
-          GUI.renderSessions();
+          //GUI.renderSessions();
         });
       }
 
@@ -394,7 +390,7 @@ $(document).ready(function(){
         text: text
       });
 
-      GUI.renderSessions();
+      //GUI.renderSessions();
     },
 
 
@@ -406,7 +402,7 @@ $(document).ready(function(){
      * - true: if the event is "iscomposing active"
      * - false: if the event is "iscomposing idle"
      */
-    phoneIsComposingReceived : function(uri, active) {
+    /*phoneIsComposingReceived : function(uri, active) {
       console.log('Tryit: phoneIsCompsingReceived_react()');
 
       var session = GUI.getSession(uri);
@@ -416,8 +412,8 @@ $(document).ready(function(){
         return false;
 
       session.isComposing=active;
-      GUI.renderSessions();
-    },
+      //GUI.renderSessions();
+    },*/
 
     // Button Click handlers
     buttonCloseClick: function(uri) {
@@ -448,7 +444,7 @@ $(document).ready(function(){
        });
     },
 
-    buttonHoldClick: function(call) {
+    /*buttonHoldClick: function(call) {
       console.log('Tryit: buttonHoldClick');
 
       if (! call.isReadyToReOffer()) {
@@ -493,7 +489,7 @@ $(document).ready(function(){
 
         call.refer(target, options);
       }
-    },
+    },*/
 
     buttonHangupClick: function(call) {
       console.log('Tryit: buttonHangupClick');
@@ -508,7 +504,7 @@ $(document).ready(function(){
     },
 
     // iscomposing stuff.
-    chatInputChange: function (uri, text, enter) {
+    /*chatInputChange: function (uri, text, enter) {
       console.log('Tryit: chatInputChange');
 
       var session, compositionIndicator;
@@ -542,12 +538,12 @@ $(document).ready(function(){
       }
 
       session.compositionIndicator.idle();
-    },
+    },*/
 
     /* session container focus
      * associate the call remote stream to the removeView
      */
-    sessionClick: function(call) {
+    /*sessionClick: function(call) {
       console.log('Tryit: sessionClick()');
       var remoteStream;
 
@@ -563,7 +559,7 @@ $(document).ready(function(){
       if (remoteStream) {
         remoteView = JsSIP.rtcninja.attachMediaStream(remoteView, remoteStream);
       }
-    },
+    },*/
 
     /*
      * Cambia el indicador de "Status". Debe llamarse con uno de estos valores:
@@ -571,7 +567,7 @@ $(document).ready(function(){
      * - "registered"
      * - "disconnected"
      */
-    setStatus : function(status) {
+    /*setStatus : function(status) {
       $("#conn-status").removeClass();
       $("#conn-status").addClass(status);
       $("#conn-status > .value").text(status);
@@ -581,7 +577,7 @@ $(document).ready(function(){
         register_checkbox.attr("checked", true);
       else
         register_checkbox.attr("checked", false);
-    },
+    },*/
 
 
     jssipCall : function(target) {
@@ -602,7 +598,7 @@ $(document).ready(function(){
 
 
   // Add/remove video during a call.
-  $('#enableVideo').change(function() {
+  /*$('#enableVideo').change(function() {
     if (! _Session) { return; }
 
     if (! _Session.isReadyToReOffer()) {
@@ -696,6 +692,6 @@ $(document).ready(function(){
         rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: true }
       });
     }
-  });
+  });*/
 
 });
