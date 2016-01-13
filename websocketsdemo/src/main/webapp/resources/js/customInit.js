@@ -1,15 +1,31 @@
 // Global variables (kill me).
-var register_checkbox = null;
-var phone_dialed_number_screen = null;
+//var register_checkbox = null;
+//var phone_dialed_number_screen = null;
 var phone_call_button = null;
+var phone_accept_button = null;
+var phone_reject_button = null;
+var phone_hangup_button = null;
 var phone_chat_button = null;
-var phone_dialpad_button = null;
-var soundPlayer = null;
-var _Session = null;  // The last RTCSession instance.
+//var phone_dialpad_button = null;
+//var soundPlayer = null;
+//var _Session = null;  // The last RTCSession instance.
 var peerconnection_config = peerconnection_config || undefined;
 
 $(document).ready(function(){
-	  // Local variables.
+    // Global variables.
+  var PageTitle = "JsSIP Tryit";
+  document.title = PageTitle;
+  phone_accept_button = $('#acceptbtn');
+  //register_checkbox = $("#phone > .status #register");
+  //phone_dialed_number_screen = $("#phone > .controls  input.destination");
+  phone_call_button = $("#callbtn");
+  phone_chat_button = $("#phone > .controls > .dialbox > .dial-buttons > .chat");
+  //phone_dialpad_button = $("#phone > .controls > .dialpad .button");
+  //soundPlayer = document.createElement("audio");
+  //soundPlayer.volume = 1;
+  phone_reject_button = $('#rejectbtn');
+  phone_hangup_button = $('#hangungbtn');
+	// Local variables.
 
     var display_name = null;
     var sip_uri = null;
@@ -188,6 +204,22 @@ $(document).ready(function(){
 		phone_chat_button.click(function(event) {
 			//GUI.phoneChatButtonPressed();
 		});
+
+        phone_accept_button.click(function(){
+            //call la incoming
+            GUI.buttonAnswerClick(this.state.call);
+        });
+
+        phone_reject_button.click(function(){
+
+        });
+
+        phone_hangup_button.click(function(){
+
+        });
+
+        
+
 
 		/*phone_dialpad_button.click(function() {
 			if ($(this).hasClass("digit-asterisk"))

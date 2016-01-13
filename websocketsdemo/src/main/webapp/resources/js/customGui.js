@@ -11,112 +11,9 @@ $(document).ready(function(){
 
   window.GUI = {
     // Active session collection
-    Sessions: [],
+    //Sessions: [],
 
     // Add a session object to the session collection
-    createSession: function(display_name, uri) {
-      console.log('Tryit: createSession');
-
-      var session, compositionIndicator;
-
-      session = GUI.getSession(uri);
-
-      if (session === null) {
-        // iscomposing stuff.
-        compositionIndicator = GUI.createCompositionIndicator(uri);
-        compositionIndicator.idle();
-
-
-        session = {
-          uri: uri,
-          displayName: display_name,
-          call: null,
-          compositionIndicator: compositionIndicator,
-          isComposing: false,
-          chat: []
-        };
-
-        GUI.Sessions.push(session);
-      }
-
-      return session;
-    },
-
-    // remove a session object from the session collection
-    removeSession: function(uri, force) {
-      console.log('Tryit: removeSession');
-      var idx, session;
-
-      for(idx in GUI.Sessions) {
-        session = GUI.Sessions[idx];
-        if (session.uri === uri) {
-
-          // living chat session
-          if (!force && session.chat.length) {
-            session.call = null;
-          } else {
-            session.compositionIndicator.close();
-            GUI.Sessions.splice(idx,1);
-          }
-        }
-      }
-
-      //GUI.renderSessions();
-    },
-
-    // get a session object from the session collection based on uri
-    getSession: function(uri) {
-      console.log('Tryit: getSession');
-
-      var idx,
-        session = null;
-
-      for(idx in GUI.Sessions) {
-        if (GUI.Sessions[idx].uri === uri) {
-          session = GUI.Sessions[idx];
-          break;
-        }
-      }
-
-      return session;
-    },
-
-    /*renderSessions: function() {
-      console.log('Tryit: renderSessions');
-      React.render(
-        React.createElement(SessionsList, {
-            data: GUI.Sessions
-          }), document.getElementById('sessions')
-      );
-    },*/
-
-    createCompositionIndicator: function(uri) {
-      console.log('Tryit: createCompositionIndicator');
-
-      var compositionIndicator = iscomposing({format: 'xml'});
-
-      compositionIndicator.on('local:active', function (msg, mimeContentType) {
-        ua.sendMessage(uri, msg, {
-          contentType: mimeContentType
-        });
-      });
-
-      compositionIndicator.on('local:idle', function (msg, mimeContentType) {
-        ua.sendMessage(uri, msg, {
-          contentType: mimeContentType
-        });
-      });
-
-      compositionIndicator.on('remote:active', function (statusContentType) {
-        GUI.phoneIsComposingReceived(uri, true);
-      });
-
-      compositionIndicator.on('remote:idle', function (statusContentType) {
-        GUI.phoneIsComposingReceived(uri, false);
-      });
-
-      return compositionIndicator;
-    },
 
     phoneCallButtonPressed : function() {
       var target = phone_dialed_number_screen.val();
@@ -153,23 +50,6 @@ $(document).ready(function(){
         call = e.session,//call == _Session now//call = RTCSession {ua: UA, status: 4, dialog: null, earlyDialogs: Object, connection: null…}, e = Object {originator: "remote", session: RTCSession, r
         uri = call.remote_identity.uri,
         display_name = call.remote_identity.display_name || uri.user;
-
-      session = GUI.getSession(uri.toAor());
-
-      // We already have a session with this peer
-      if (session) {
-        if (session.call && !session.call.isEnded()) {
-          call.terminate();
-          return;
-        } else {
-          session.call = call;
-        }
-
-      // new session
-      } else {
-        session = GUI.createSession(display_name, uri.toAor());
-        session.call = call;
-      }
 
       //GUI.renderSessions();
       GUI.setCallEventHandlers(e);
@@ -239,14 +119,14 @@ $(document).ready(function(){
       call.on('failed',function(e) {
         //GUI.playSound("sounds/outgoing-call-rejected.wav");
 
-        GUI.removeSession(call.remote_identity.uri.toAor());
+        /*GUI.removeSession(call.remote_identity.uri.toAor());
 
         if (GUI.Sessions.length === 0) {
           _Session = null;
 
           selfView.src = '';
           remoteView.src = '';
-        }
+        }*/
       });
 
       // NewDTMF
@@ -264,7 +144,7 @@ $(document).ready(function(){
 
       // Ended
       call.on('ended', function(e) {
-        var session, remoteStream;
+        /*var session, remoteStream;
 
         GUI.removeSession(call.remote_identity.uri.toAor());
 
@@ -277,7 +157,7 @@ $(document).ready(function(){
 
           JsSIP.rtcninja.closeMediaStream(localStream);
 
-        }
+        }*/
       });
 
       // received UPDATE
@@ -306,32 +186,6 @@ $(document).ready(function(){
           call.connection.addStream(localStream);
         }
         */
-      });
-
-      // received REFER
-      call.on('refer', function(e) {
-        console.error('accepting the refer');
-        e.accept(function(session, request) {
-          GUI.new_call({
-            originator: 'remote',
-            session: session,
-            request: session.request
-          });
-        }, {
-          mediaStream: localStream
-        });
-      });
-
-      // received INVITE replacing this session
-      call.on('replaces', function(e) {
-        console.error('accepting the replaces');
-        e.accept(function(session, request) {
-          GUI.new_call({
-            originator: 'local',
-            session: session,
-            request: session.request
-          });
-        });
       });
     },
 
@@ -393,32 +247,10 @@ $(document).ready(function(){
       //GUI.renderSessions();
     },
 
-
-    /*
-     * This callback method is called by 'iscomposing.js' when a MESSAGE is received
-     * with content type application/im-iscomposing+xml.
-     * The first parameter is the From URI (sip:user@domain) and
-     * a second parameter indicates 'active':
-     * - true: if the event is "iscomposing active"
-     * - false: if the event is "iscomposing idle"
-     */
-    /*phoneIsComposingReceived : function(uri, active) {
-      console.log('Tryit: phoneIsCompsingReceived_react()');
-
-      var session = GUI.getSession(uri);
-
-      // If a session does not exist just ignore it.
-      if (!session)
-        return false;
-
-      session.isComposing=active;
-      //GUI.renderSessions();
-    },*/
-
     // Button Click handlers
     buttonCloseClick: function(uri) {
       console.log('Tryit: buttonCloselClick');
-      GUI.removeSession(uri, true /*force*/);
+      //GUI.removeSession(uri, true /*force*/);
     },
 
     buttonDialClick: function(target) {
@@ -444,53 +276,6 @@ $(document).ready(function(){
        });
     },
 
-    /*buttonHoldClick: function(call) {
-      console.log('Tryit: buttonHoldClick');
-
-      if (! call.isReadyToReOffer()) {
-        console.warn('Tryit: not ready to reoffer');
-        return;
-      }
-      if (! localCanRenegotiateRTC() || ! call.data.remoteCanRenegotiateRTC) {
-        console.warn('Tryit: resetting PeerConnection before hold');
-        call.connection.reset();
-        call.connection.addStream(localStream);
-      }
-      call.hold({useUpdate: false});
-    },
-
-    buttonResumeClick: function(call) {
-      console.log('Tryit: buttonResumeClick');
-
-      if (! call.isReadyToReOffer()) {
-        console.warn('Tryit: not ready to reoffer');
-        return;
-      }
-      if (! localCanRenegotiateRTC() || ! call.data.remoteCanRenegotiateRTC) {
-        console.warn('Tryit: resetting PeerConnection before unhold');
-        call.connection.reset();
-        call.connection.addStream(localStream);
-      }
-      call.unhold();
-    },
-
-    buttonTransferClick: function(call) {
-      console.log('Tryit: buttonTransferClick');
-      var refer_to,
-          options = {},
-          target = phone_dialed_number_screen.val();
-
-      if (target) {
-        phone_dialed_number_screen.val("");
-
-        if (lastSelectedCall && lastSelectedCall !== call && !lastSelectedCall.isEnded()) {
-          options.replaces = lastSelectedCall;
-        }
-
-        call.refer(target, options);
-      }
-    },*/
-
     buttonHangupClick: function(call) {
       console.log('Tryit: buttonHangupClick');
 
@@ -502,83 +287,6 @@ $(document).ready(function(){
 
       call.sendDTMF(digit);
     },
-
-    // iscomposing stuff.
-    /*chatInputChange: function (uri, text, enter) {
-      console.log('Tryit: chatInputChange');
-
-      var session, compositionIndicator;
-
-      session = GUI.getSession(uri);
-
-      if (!session) {
-        return;
-      }
-
-      compositionIndicator = session.compositionIndicator;
-
-      if (enter && text.length) {
-        ua.sendMessage(uri, text);
-        compositionIndicator.sent();
-      } else if (text.length) {
-        compositionIndicator.composing();
-      } else {
-        compositionIndicator.idle();
-      }
-    },
-
-    // iscomposing stuff.
-    chatInputBlur: function (uri) {
-      console.log('Tryit: chatInputBlur');
-
-      var session = GUI.getSession(uri);
-
-      if (!session) {
-        return;
-      }
-
-      session.compositionIndicator.idle();
-    },*/
-
-    /* session container focus
-     * associate the call remote stream to the removeView
-     */
-    /*sessionClick: function(call) {
-      console.log('Tryit: sessionClick()');
-      var remoteStream;
-
-      if (!call || !call.connection) {
-        return;
-      }
-
-      console.log('Setting lastSelectedCall');
-      lastSelectedCall = call;
-
-      remoteStream = call.connection.getRemoteStreams()[0];
-
-      if (remoteStream) {
-        remoteView = JsSIP.rtcninja.attachMediaStream(remoteView, remoteStream);
-      }
-    },*/
-
-    /*
-     * Cambia el indicador de "Status". Debe llamarse con uno de estos valores:
-     * - "connected"
-     * - "registered"
-     * - "disconnected"
-     */
-    /*setStatus : function(status) {
-      $("#conn-status").removeClass();
-      $("#conn-status").addClass(status);
-      $("#conn-status > .value").text(status);
-
-      register_checkbox.attr("disabled", false);
-      if(status == "registered")
-        register_checkbox.attr("checked", true);
-      else
-        register_checkbox.attr("checked", false);
-    },*/
-
 
     jssipCall : function(target) {
         ua.call(target, {
@@ -595,103 +303,5 @@ $(document).ready(function(){
     }
 
   };//END WINDOW GUI
-
-
-  // Add/remove video during a call.
-  /*$('#enableVideo').change(function() {
-    if (! _Session) { return; }
-
-    if (! _Session.isReadyToReOffer()) {
-      console.warn('Tryit: not ready to reoffer');
-      return;
-    }
-
-    var mediaConstraints = { audio: true, video: true };
-
-    // Video addition/removal form the current MediaStream.
-    if (localCanRenegotiateRTC()) {
-      if (!$(this).is(':checked')) {
-        // Remove local video.
-        var videoTrack = _Session.connection.getLocalStreams()[0].getVideoTracks()[0];
-
-        if (!videoTrack) {
-          return;
-        }
-        _Session.connection.getLocalStreams()[0].removeTrack(videoTrack);
-
-        doRenegotiate();
-
-        selfView = JsSIP.rtcninja.attachMediaStream(selfView, localStream);
-      }
-      // Add local video.
-      else {
-        var videoTrack = _Session.connection.getLocalStreams()[0].getVideoTracks()[0];
-
-        if (videoTrack) {
-          return;
-        }
-
-        JsSIP.rtcninja.getUserMedia({video: true, audio: false},
-          addVideoTrack,
-          function(error) {
-            throw error;
-          }
-        );
-
-        function addVideoTrack(stream) {
-          var videoTrack = stream.getVideoTracks()[0];
-
-          _Session.connection.getLocalStreams()[0].addTrack(videoTrack);
-
-          doRenegotiate();
-
-          selfView = JsSIP.rtcninja.attachMediaStream(selfView, localStream);
-        }
-      }
-    }
-
-    // New MediaStream.
-    else {
-      var mediaConstraints = {
-        audio: true,
-        video: $(this).is(':checked')
-      };
-
-      JsSIP.rtcninja.getUserMedia(mediaConstraints,
-        useNewLocalStream,
-        function(error) {
-          throw error;
-        }
-      );
-    }
-
-    function useNewLocalStream(stream) {
-      if (! _Session) { return; }
-
-      if (localCanRenegotiateRTC() && _Session.data.remoteCanRenegotiateRTC) {
-        _Session.connection.removeStream(localStream);
-        _Session.connection.addStream(stream);
-      }
-      else {
-        console.warn('Tryit: resetting PeerConnection before renegotiating the session');
-        _Session.connection.reset();
-        _Session.connection.addStream(stream);
-      }
-
-      JsSIP.rtcninja.closeMediaStream(localStream);
-
-      doRenegotiate();
-
-      localStream = stream;
-      selfView = JsSIP.rtcninja.attachMediaStream(selfView, stream);
-    }
-
-    function doRenegotiate() {
-      _Session.renegotiate({
-        useUpdate: true,
-        rtcOfferConstraints: { offerToReceiveAudio: true, offerToReceiveVideo: true }
-      });
-    }
-  });*/
 
 });

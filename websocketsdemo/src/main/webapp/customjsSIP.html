@@ -5,6 +5,7 @@
 		server</title>
 	</head>
 	<body>
+		<!--LocalView and RemoteView-->
 		<div id='mainDiv'>
 			<table border="1" width="100%">
 				<tr>
@@ -15,7 +16,7 @@
 					<td><video id="selfView" autoplay></video></td>
 					<td><video id="remoteView" autoplay></video></td>
 				</tr>
-				<tr>
+				<!--<tr>
 					<td align="center"><textarea rows="4" cols="60"
 						id="dataChannelSend" disabled
 						placeholder="This will be enabled once
@@ -30,31 +31,33 @@
 						<button id="sendButton" disabled>Send</button>
 					</td>
 					<td></td>
-				</tr>
+				</tr>-->
 			</table>
 		</div>
-		<div>
+		<!--Login wss-->
+		<div id='loginform'>
 			<input id="ws_servers" type="text"/>
 			<input id="display_name" type="text"/>
 			<input id="sip_uri" type="text"/>
 			<input id="sip_password" type="password"/>
-			<button>Connect</button>
+			<button type="button" id="connectbtn">Connect</button>
 		</div>
+		<!--Phone Buttons-->
 		<div>
-			<input type="text" id=""/>
-			<button>Call</button>
-			<button>Terminate</button>
+			<input type="text" id="callTarget"/>
+			<button type="button" id="connectbtn">Call</button>
+			<button type="button" id="acceptbtn">Accept</button>
+			<button type="button" id="rejectbtn">Reject</button>
+			<button type="button" id="hangungbtn">Hang Up</button>
 		</div>
-		<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/react-with-addons.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/JSXTransformer.js"></script>
-		<script src="resources/js/sessions.jsx" type="text/jsx"></script>-->
 
 		<script src="resources/js/jquery-2.1.4.min.js" type="text/javascript"></script>
-		<script src="resources/js/jquery.balloon.min.js" type="text/javascript"></script>
+
+		<!--<script src="resources/js/jquery.balloon.min.js" type="text/javascript"></script>
 		<script src="resources/js/parseuri.js" type="text/javascript"></script>
 		<script src="resources/js/customInit.js" type="text/javascript"></script>
 		<script src="resources/js/customGui.js" type="text/javascript"></script>
-		<script src="resources/js/iscomposing.js" type="text/javascript"></script>
+		<script src="resources/js/iscomposing.js" type="text/javascript"></script>-->
 
 		<!-- For Hacking Tryit read http://tryit.jssip.net/js/custom.REMOVE_THIS.js -->
 
@@ -63,6 +66,7 @@
 		<!-- Try to load rtcninja-temasys.js -->
 		<script src="resources/js/rtcninja-temasys.min.js" type="text/javascript"></script>
 		<!-- If CustomJsSIP is set in js/custom.js file then load JsSIP from the URL in CustomJsSIP variable. -->
+		<script src="resources/js/customphone.js" type="text/javascript"></script>
 		<script>
 		if (window.rtcninjaTemasys) {
 			rtcninjaTemasys({}, {},
