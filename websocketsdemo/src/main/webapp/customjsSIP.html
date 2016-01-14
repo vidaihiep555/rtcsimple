@@ -36,16 +36,33 @@
 		</div>
 		<!--Login wss-->
 		<div id='loginform'>
-			<input id="ws_servers" type="text"/>
-			<input id="display_name" type="text"/>
-			<input id="sip_uri" type="text"/>
-			<input id="sip_password" type="password"/>
+			<div class="form-group">
+				<label for="ws_servers">WS Server</label>
+				<input type="text" class="form-control" id="ws_servers">
+			</div>
+			<div class="form-group">
+				<label for="display_name">Display Name</label>
+				<input type="text" class="form-control" id="display_name">
+			</div>
+			<div class="form-group">
+				<label for="sip_uri">SIP URI</label>
+				<input type="text" class="form-control" id="sip_uri">
+			</div>
+			<div class="form-group">
+				<label for="sip_password">Password</label>
+				<input type="password" class="form-control" id="sip_password">
+			</div>
+			<div class="form-group">
+				<label for="exampleInputEmail1">Email address</label>
+				<input type="text" class="form-control" id="exampleInputEmail1">
+			</div>
 			<button type="button" id="connectbtn">Connect</button>
 		</div>
 		<!--Phone Buttons-->
 		<div>
+			<label for="callTarget">Call Target</label>
 			<input type="text" id="callTarget"/>
-			<button type="button" id="connectbtn">Call</button>
+			<button type="button" id="callbtn">Call</button>
 			<button type="button" id="acceptbtn">Accept</button>
 			<button type="button" id="rejectbtn">Reject</button>
 			<button type="button" id="hangungbtn">Hang Up</button>

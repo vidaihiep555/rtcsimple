@@ -40,11 +40,10 @@ $(document).ready(function() {
 
 	//login wss inputs
 	login_form = $("#login-form");
-    login_inputs = $("#login-form input");
-    login_display_name = $("#login-form input#display_name");
-    login_sip_uri = $("#login-form input#sip_uri");
-    login_sip_password = $("#login-form input#sip_password");
-    login_ws_servers = $("#login-form input#ws_servers");
+    login_display_name = $("#display_name");
+    login_sip_uri = $("#sip_uri");
+    login_sip_password = $("#sip_password");
+    login_ws_servers = $("#ws_servers");
     connect_button = $('#connectbtn');
     connect_button.click(createSipStack);
 
@@ -53,10 +52,14 @@ $(document).ready(function() {
 
 	//phone buttons
 	phone_accept_button = $('#acceptbtn');
+	phone_accept_button.prop('disabled', true);
 	phone_call_button = $("#callbtn");
+	phone_call_button.prop('disabled', true);
 	//phone_chat_button = $("#phone > .controls > .dialbox > .dial-buttons > .chat");
 	phone_reject_button = $('#rejectbtn');
+	phone_reject_button.prop('disabled', true);
 	phone_hangup_button = $('#hangungbtn');
+	phone_hangup_button.prop('disabled', true);
 
 	phone_call_button.click(sipcall(true));
 	phone_accept_button.click(accept);
@@ -111,6 +114,8 @@ function createSipStack() {
  	console.info("Create SIP stack with configuration: " + JSON.stringify(configuration));
  	try {
  		ua = new JsSIP.UA(configuration);
+ 		phone_call_button.prop('disabled', false);
+ 		//connect_button.prop('disabled', true);
  	} catch (e) {
  		console.debug(e.toString());
  		return;
@@ -143,8 +148,14 @@ function createSipStack() {
 			// new incoming call
 			active_call = e.session;
 			new_call(e);
-
-		} else {//outgoing call
+			// ui
+			if(e.session.direction === 'incoming') {
+				moveUIToState('incoming');
+				//message: "" + active_call.remote_identity.display_name + " is calling you"
+			} else {
+				moveUIToState('calling');
+			}
+		} else {
 			e.data.session.terminate({status_code: 486});
 		}
 	});
@@ -190,6 +201,7 @@ function new_call(e){
 			// TMP
 			window.localStream = localStream;
 		}
+		moveUIToState('incall');
 	});
 
 	// Started
@@ -243,7 +255,7 @@ function new_call(e){
 
 	active_call.on('ended', function(e) {
 		console.debug("Call terminated");
-		//moveUIToState('phone');
+		moveUIToState('phone');
 		active_call = null;	
 		//chrome.notifications.clear("ring", function() {});
 	});
@@ -266,7 +278,8 @@ function sipcall(isvideosupport) {
 			'rtcOfferConstraints': {offerToReceiveAudio: 1, offerToReceiveVideo: 1}
 		};
 		if(!ua === null){
-			active_call = ua.call(callTarget.val(), options);
+			//active_call = ua.call(callTarget.val(), options);
+			ua.call(callTarget.val(), options);
 		}
 		
 		
@@ -306,6 +319,23 @@ function reject() {
 	}
 }
 
+function moveUIToState(panel) {
+	if (panel === 'phone') {
+		// hide all
+		
+
+	} else if (panel === 'incoming') {
+		callTarget.val("" + active_call.remote_identity.display_name + "is calling you");
+		phone_accept_button.prop('disabled', false);
+		phone_reject_button.prop('disabled', false);
+	
+	} else if (panel === 'calling') {
+		
+
+	} else if (panel === 'incall') {
+		phone_hangup_button.prop('disabled', false);
+	}
+}
 
 
 $(document).unload(function() {
