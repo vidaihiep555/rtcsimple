@@ -99,7 +99,7 @@ function createSipStack() {
 	}
 	peerconnection_config = JSON.parse('{ "iceServers": [ {"urls": ["stun:stun.l.google.com:19302"]} ], "gatheringTimeout": 2000 }');
  	var configuration = {
- 		uri: 'sip:'+sip_uri,
+ 		uri: sip_uri,
  		password: sip_password,
  		ws_servers: ws_servers,
  		display_name: display_name,
@@ -129,7 +129,7 @@ function createSipStack() {
 
  	ua.on('disconnected', function(e){ 
  		console.debug("Disconnected from websocket");
- 		document.title = PageTitle;
+ 		//document.title = PageTitle;
  		if (! ws_was_connected) {
 		    //alert("WS connection error:\n\n- WS close code: " + e.data.code + "\n- WS close reason: " + e.data.reason);
 		    console.error("WS connection error | WS close code: " + e.code + " | WS close reason: " + e.reason);
