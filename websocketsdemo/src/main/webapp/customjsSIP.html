@@ -1,81 +1,199 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Very simple WebRTC application with a Node.js signaling
-		server</title>
-	</head>
-	<body>
-		<!--LocalView and RemoteView-->
-		<div id='mainDiv'>
-			<table border="1" width="100%">
-				<tr>
-					<th>Local video</th>
-					<th>Remote video</th>
-				</tr>
-				<tr>
-					<td><video id="selfView" autoplay></video></td>
-					<td><video id="remoteView" autoplay></video></td>
-				</tr>
-				<!--<tr>
-					<td align="center"><textarea rows="4" cols="60"
-						id="dataChannelSend" disabled
-						placeholder="This will be enabled once
-						the data channel is up...">
-					</textarea></td>
-					<td align="center"><textarea rows="4" cols="60"
-						id="dataChannelReceive" disabled>
-					</textarea></td>
-				</tr>
-				<tr>
-					<td align="center">
-						<button id="sendButton" disabled>Send</button>
-					</td>
-					<td></td>
-				</tr>-->
-			</table>
-		</div>
-		<!--Login wss-->
-		<div id='loginform'>
-			<div class="form-group">
-				<label for="ws_servers">WS Server</label>
-				<input type="text" class="form-control" id="ws_servers" value="wss://tryit.jssip.net:10443">
-			</div>
-			<div class="form-group">
-				<label for="display_name">Display Name</label>
-				<input type="text" class="form-control" id="display_name">
-			</div>
-			<div class="form-group">
-				<label for="sip_uri">SIP URI</label>
-				<input type="text" class="form-control" id="sip_uri">
-			</div>
-			<div class="form-group">
-				<label for="sip_password">Password</label>
-				<input type="password" class="form-control" id="sip_password">
-			</div>
-			<button type="button" id="connectbtn">Connect</button>
-		</div>
-		<!--Phone Buttons-->
-		<div>
-			<label for="callTarget">Call Target</label>
-			<input type="text" id="callTarget"/>
-			<button type="button" id="callbtn">Call</button>
-			<button type="button" id="acceptbtn">Accept</button>
-			<button type="button" id="rejectbtn">Reject</button>
-			<button type="button" id="hangungbtn">Hang Up</button>
-		</div>
+	<title>Very simple WebRTC application</title>
+	<link rel="stylesheet" href="resources/css/bootstrap.min.css">
+	<link rel="stylesheet" href="resources/css/bootstrap-theme.min.css">
+	<link rel="stylesheet" href="resources/css/symple.player.css">
+	<link rel="stylesheet" href="resources/css/app.css">
 
-		<script src="resources/js/jquery-2.1.4.min.js" type="text/javascript"></script>
+</head>
+<body>
+	<div id="container">
 
-		<!--<script src="resources/js/jquery.balloon.min.js" type="text/javascript"></script>
+		<nav id="nav">
+			<h1 id="logo"><a href="">Symple WebRTC Video Chat</a></h1>
+			<a href="">about</a>
+			<a href="">code</a>
+		</nav>
+
+		<div class="row">
+			<div class="col-md-4">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<h3 class="panel-title">Connect</h3>
+					</div>
+					<div class="panel-body">					
+						<div class="input-group">
+							<input type="text" class="form-control" id="callTarget" placeholder="Enter a sip address..." />
+							<span class="input-group-btn">
+								<button class="btn btn-primary" type="button" id="callbtn">Call</button>
+							</span>
+						</div>
+					</div>
+				</div>
+
+				<div id="login" class="panel panel-default">
+					<div class="panel-heading">
+						<h3 class="panel-title">Connect</h3>
+					</div>
+					<div class="panel-body">
+						<form>
+							<div class="form-group">
+								<label for="ws_servers">WS Server</label>
+								<input type="text" class="form-control" id="ws_servers" placeholder="Ex: wss://tryit.jssip.net:10443">
+							</div>
+							<div class="form-group">
+								<label for="display_name">Display Name</label>
+								<input type="text" class="form-control" id="display_name">
+							</div>
+							<div class="form-group">
+								<label for="sip_uri">SIP URI</label>
+								<input type="text" class="form-control" id="sip_uri">
+							</div>
+							<div class="form-group">
+								<label for="sip_password">Password</label>
+								<input type="password" class="form-control" id="sip_password">
+							</div>
+							<button class="btn btn-primary" id="connectbtn" type="button">Connect</button>
+						</form>
+					</div>
+				</div><!--End Login-->
+
+				<div id="roster">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h3 class="panel-title">People</h3>
+						</div>
+						<ul class="list-group">
+							<li class="list-group-item list-group-item-warning"><small>Please log in...</small></li>
+							<li class="list-group-item">
+								<div class="btn-group btn-group-xs pull-right">
+									<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+										Action <span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu" role="menu">
+										<li><a href="javascript:void(0)">Direct message</a></li>
+										<li><a href="javascript:void(0)">Video chat</a></li>
+									</ul>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div><!--End Roster-->
+			</div><!-- End col-md-4 -->
+
+			<div class="col-md-8">
+
+				<div id="video">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h3 class="panel-title">Video</h3>
+						</div>
+						<!-- Video -->
+						<div class="panel-body">
+							<div class="local-video-wrap">
+								<div class="local-video">
+									<!-- Local Video -->
+									<video id="selfView" autoplay></video>
+								</div>
+								<!--<button id="start-local-video" class="btn btn-primary">Start video</button>-->
+							</div>
+							<div class="remote-video-wrap">
+								<div class="remote-video">
+									<!-- Remote Video -->
+									<video id="remoteView" autoplay></video>
+								</div>
+							</div>
+						</div>
+					</div>	
+				</div><!-- End video -->
+
+				<!-- Message -->
+				<div id="messages">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h3 class="panel-title">Conversation</h3>
+						</div>
+						<ul class="list-group">
+							<li class="list-group-item">
+								<form id="post-message">
+									<div class="input-group">
+										<span class="input-group-btn">
+											<button class="btn btn-default dropdown-toggle direct-user" data-toggle="dropdown" type="button">@</button>
+											<ul class="dropdown-menu" role="menu">
+												<li><a href="javascript:void(0)">Send to everyone</a></li>
+												<li class="divider"></li>
+												<li>
+													<a href="javascript:void(0)"></a>
+												</li>
+											</ul>
+										</span>
+										<input type="text" class="form-control message-text" placeholder="Type your message here" />
+										<span class="input-group-btn">
+											<button class="btn btn-default" type="submit">Send!</button>
+										</span>
+									</div>
+								</form>
+							</li>
+							<li class="list-group-item">
+								<span class="time"></span>
+								<span class="user"></span>
+								<span class="data"></span>
+							</li>
+						</ul>
+					</div>
+				</div><!-- End Message -->
+
+				<!-- Incoming Call -->
+				<div class="panel panel-default" id="incomingbox">
+					<div class="panel-heading">
+						<h4 class="modal-title">Incoming call...</h4>
+					</div>
+					<div class="panel-body">					
+						<p>You have an incoming video call from <span id="caller"></span></p>
+						<div class="btn-group btn-group-justified">
+							<div class="btn-group">
+								<button type="button" class="btn btn-success accept" id="acceptbtn">Accept</button>
+							</div>
+							<div class="btn-group">
+								<button type="button" class="btn btn-danger reject" id="rejectbtn">Reject</button>
+							</div>
+						</div>
+					</div>
+				</div><!-- End Incoming Call -->
+
+				<!-- InCall -->
+				<div class="panel panel-default" id="incallbox" disabled>
+					<div class="panel-heading">
+						<h4 class="modal-title">In Call</h4>
+					</div>
+					<div class="panel-body">					
+						<p>In Call...<span class="caller"></span></p>
+						<div class="btn-group btn-group-justified">
+							<div class="btn-group">
+								<button type="button" class="btn btn-danger reject" id="hangungbtn">Hangup</button>
+							</div>
+						</div>
+					</div>
+				</div><!-- End InCall -->
+
+			</div><!-- End col-md-8 -->
+		</div><!-- End row -->
+		<footer>
+			Built with <a href="http://sourcey.com/symple">JsSIP</a> and
+			<a href="http://getbootstrap.com">Bootstrap</a>
+		</footer>
+	</div><!--End container-->		
+		<!--
 		<script src="resources/js/parseuri.js" type="text/javascript"></script>
 		<script src="resources/js/customInit.js" type="text/javascript"></script>
 		<script src="resources/js/customGui.js" type="text/javascript"></script>
 		<script src="resources/js/iscomposing.js" type="text/javascript"></script>-->
 
-		<!-- For Hacking Tryit read http://tryit.jssip.net/js/custom.REMOVE_THIS.js -->
-
 		<script src="resources/js/jssip.js" type="text/javascript"></script>
-
+		<script src="resources/js/jquery-2.1.4.min.js" type="text/javascript"></script>
+		<!--<script type="text/javascript" src="resources/js/bootstrap.min.js"></script>-->
 		<!-- Try to load rtcninja-temasys.js -->
 		<script src="resources/js/rtcninja-temasys.min.js" type="text/javascript"></script>
 		<!-- If CustomJsSIP is set in js/custom.js file then load JsSIP from the URL in CustomJsSIP variable. -->

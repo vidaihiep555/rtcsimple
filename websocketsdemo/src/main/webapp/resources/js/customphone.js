@@ -15,6 +15,9 @@ var connect_button = null;
 
 var callTarget;
 
+var incomingCallBox = null;
+var inCallBox = null;
+
 var phone_call_button = null;
 var phone_accept_button = null;
 var phone_reject_button = null;
@@ -39,27 +42,32 @@ $(document).ready(function() {
 	remoteView = document.getElementById('remoteView');
 
 	//login wss inputs
-	login_form = $("#login-form");
     login_display_name = $("#display_name");
     login_sip_uri = $("#sip_uri");
     login_sip_password = $("#sip_password");
     login_ws_servers = $("#ws_servers");
     connect_button = $('#connectbtn');
-    connect_button.click(createSipStack);
-
+    connect_button.click(function(){
+    	createSipStack();
+    });
 
     callTarget = $('#callTarget');
 
+    incomingCallBox = $('#incomingbox');
+    incomingCallBox.hide();
+    inCallBox = $('#incallbox');
+    inCallBox.hide();
+
 	//phone buttons
 	phone_accept_button = $('#acceptbtn');
-	phone_accept_button.prop('disabled', true);
+	//phone_accept_button.prop('disabled', true);
 	phone_call_button = $("#callbtn");
 	phone_call_button.prop('disabled', true);
 	//phone_chat_button = $("#phone > .controls > .dialbox > .dial-buttons > .chat");
 	phone_reject_button = $('#rejectbtn');
-	phone_reject_button.prop('disabled', true);
+	//phone_reject_button.prop('disabled', true);
 	phone_hangup_button = $('#hangungbtn');
-	phone_hangup_button.prop('disabled', true);
+	//phone_hangup_button.prop('disabled', true);
 
 	phone_call_button.click(sipcall(true));
 	phone_accept_button.click(accept);
@@ -236,6 +244,7 @@ function new_call(e){
 	active_call.on('failed', function(e) {
 		console.log('call failed with cause: '+ e.cause);
 		active_call = null;
+		moveUIToState('phone');
 		//setTimeout(function() { moveUIToState('phone'); }, 1500);
 		//chrome.notifications.clear("ring", function() {});
 	});
@@ -304,41 +313,47 @@ function accept() {
 			},
 		});
 	}
-	
 }
 
 function hangup() {
 	if (active_call !== null) {
 		active_call.terminate();
+		moveUIToState('phone');
 	}
 }
 
 function reject() {
 	if (active_call !== null) {
 		active_call.terminate(486);
+		moveUIToState('phone');
 	}
 }
 
 function moveUIToState(panel) {
 	if (panel === 'phone') {
 		// hide all
-		
+		incomingCallBox.hide();
+		inCallBox.hide();
 
 	} else if (panel === 'incoming') {
-		callTarget.val("" + active_call.remote_identity.display_name + "is calling you");
-		phone_accept_button.prop('disabled', false);
-		phone_reject_button.prop('disabled', false);
+		inCallBox.hide();
+		incomingCallBox.show();
+		$('#caller').val("" + active_call.remote_identity.display_name);
+		//callTarget.val("" + active_call.remote_identity.display_name + "is calling you");
+		//phone_accept_button.prop('disabled', false);
+		//phone_reject_button.prop('disabled', false);
 	
 	} else if (panel === 'calling') {
-		
 
 	} else if (panel === 'incall') {
-		phone_hangup_button.prop('disabled', false);
+		incomingCallBox.hide();
+		inCallBox.show();
+		///phone_hangup_button.prop('disabled', false);
 	}
 }
 
 
-$(document).unload(function() {
+/*$(document).unload(function() {
 	console.info("Unload application");
 	
 	if(active_call !== null) 
@@ -348,4 +363,4 @@ $(document).unload(function() {
 		ua.unregister();
 		ua.stop();
 	}
-});
+});*/
