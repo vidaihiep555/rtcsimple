@@ -62,17 +62,29 @@ $(document).ready(function() {
 	phone_accept_button = $('#acceptbtn');
 	//phone_accept_button.prop('disabled', true);
 	phone_call_button = $("#callbtn");
-	phone_call_button.prop('disabled', true);
+	phone_call_button.click(function(){
+		sipcall(true);
+	});
+	//phone_call_button.prop('disabled', true);
 	//phone_chat_button = $("#phone > .controls > .dialbox > .dial-buttons > .chat");
 	phone_reject_button = $('#rejectbtn');
 	//phone_reject_button.prop('disabled', true);
 	phone_hangup_button = $('#hangungbtn');
 	//phone_hangup_button.prop('disabled', true);
 
-	phone_call_button.click(sipcall(true));
-	phone_accept_button.click(accept);
-	phone_reject_button.click(reject);
-	phone_hangup_button.click(hangup);
+	//phone_call_button.click(sipcall(true));
+	phone_accept_button.click(function(){
+		accept();
+	});
+	phone_reject_button.click(function(){
+		reject();
+	});
+	phone_hangup_button.click(function(){
+		hangup();
+	});
+
+	phone_call_button.prop('disabled', true);
+	//moveUIToState('phone');
 
 });
 /**
@@ -111,12 +123,12 @@ function createSipStack() {
  		password: sip_password,
  		ws_servers: ws_servers,
  		display_name: display_name,
- 		no_answer_timeout: 20,
+ 		//no_answer_timeout: 20,
  		session_timers: false,
  		register: true,
- 		trace_sip: true,
- 		connection_recovery_max_interval: 30,
- 		connection_recovery_min_interval: 2
+ 		trace_sip: true
+ 		//connection_recovery_max_interval: 30,
+ 		//connection_recovery_min_interval: 2
  	};
 
  	console.info("Create SIP stack with configuration: " + JSON.stringify(configuration));
@@ -131,7 +143,7 @@ function createSipStack() {
 
  	ua.on('connected', function(e){ 
  		console.debug("Connected to websocket.");
- 		document.title = PageTitle;
+ 		//document.title = PageTitle;
  		ws_was_connected = true;
  	});
 
@@ -286,10 +298,10 @@ function sipcall(isvideosupport) {
 			'mediaConstraints': {audio: true, video: isvideosupport},
 			'rtcOfferConstraints': {offerToReceiveAudio: 1, offerToReceiveVideo: 1}
 		};
-		if(!ua === null){
+		//if(!ua === null){
 			//active_call = ua.call(callTarget.val(), options);
 			ua.call(callTarget.val(), options);
-		}
+		//}
 		
 		
 	} else {
@@ -312,6 +324,8 @@ function accept() {
 				offerToReceiveVideo: 1
 			},
 		});
+
+		moveUIToState('incall');
 	}
 }
 
@@ -351,6 +365,28 @@ function moveUIToState(panel) {
 		///phone_hangup_button.prop('disabled', false);
 	}
 }
+
+/*function createACallBox(call){
+	<div class="panel panel-default" id="incomingbox">
+		<div class="panel-heading">
+			<h4 class="modal-title">Incoming call...</h4>
+		</div>
+		<div class="panel-body">					
+			<p>You have an incoming video call from <span id="caller"></span></p>
+			<div class="btn-group btn-group-justified">
+				<div class="btn-group">
+					<button type="button" class="btn btn-success accept" id="acceptbtn">Accept</button>
+				</div>
+				<div class="btn-group">
+					<button type="button" class="btn btn-danger reject" id="rejectbtn">Reject</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	var incomingbox = $("<div class='panel panel-default' id='" + call.)
+	$('#sessions').append()
+}*/
 
 
 /*$(document).unload(function() {

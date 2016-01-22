@@ -40,22 +40,27 @@
 					<div class="panel-body">
 						<form>
 							<div class="form-group">
-								<label for="ws_servers">WS Server</label>
-								<input type="text" class="form-control" id="ws_servers" placeholder="Ex: wss://tryit.jssip.net:10443" value="ws://zistasip.zipitchat.com.my:10080">
+								<label for="realm">Realm</label>
+								<input type="text" class="form-control" id="realm" placeholder="" value="zistasip.zipitchat.com.my">
 							</div>
 							<div class="form-group">
 								<label for="display_name">Display Name</label>
 								<input type="text" class="form-control" id="display_name" value="z1">
 							</div>
 							<div class="form-group">
-								<label for="sip_uri">SIP URI</label>
-								<input type="text" class="form-control" id="sip_uri" value="sip:SS_0c537c77acad6484fe81e3e9fdd0e401996d28a9@zistasip.zipitchat.com.my">
+								<label for="private_identity">Private Identity</label>
+								<input type="text" class="form-control" id="private_identity" value="SS_0c537c77acad6484fe81e3e9fdd0e401996d28a9">
+							</div>
+							<div class="form-group">
+								<label for="public_identity">Public Identity</label>
+								<input type="text" class="form-control" id="public_identity" value="sip:SS_0c537c77acad6484fe81e3e9fdd0e401996d28a9@zistasip.zipitchat.com.my">
 							</div>
 							<div class="form-group">
 								<label for="sip_password">Password</label>
 								<input type="password" class="form-control" id="sip_password" value="eE46djCznDQGr0WM">
 							</div>
 							<button class="btn btn-primary" id="connectbtn" type="button">Connect</button>
+							<button class="btn btn-primary" id="unconnectbtn" type="button">Unconnect</button>
 						</form>
 					</div>
 				</div><!--End Login-->
@@ -88,7 +93,8 @@
 			</div><!-- End col-md-4 -->
 
 			<div class="col-md-8">
-
+				<label style="width: 100%;" align="center" id="txtCallStatus"></label>
+				<label style="width: 100%;" align="center" id="txtRegStatus"></label>
 				<div id="video">
 					<div class="panel panel-default">
 						<div class="panel-heading">
@@ -194,14 +200,14 @@
 		<script src="resources/js/customInit.js" type="text/javascript"></script>
 		<script src="resources/js/customGui.js" type="text/javascript"></script>
 		<script src="resources/js/iscomposing.js" type="text/javascript"></script>-->
-
+		<script src="resources/js/SIPml-api.js" type="text/javascript"></script>
 		<script src="resources/js/jssip.js" type="text/javascript"></script>
 		<script src="resources/js/jquery-2.1.4.min.js" type="text/javascript"></script>
 		<!--<script type="text/javascript" src="resources/js/bootstrap.min.js"></script>-->
 		<!-- Try to load rtcninja-temasys.js -->
 		<script src="resources/js/rtcninja-temasys.min.js" type="text/javascript"></script>
 		<!-- If CustomJsSIP is set in js/custom.js file then load JsSIP from the URL in CustomJsSIP variable. -->
-		<script src="resources/js/customphone.js" type="text/javascript"></script>
+		<script src="resources/js/customsipmlphone.js" type="text/javascript"></script>
 		<script>
 		if (window.rtcninjaTemasys) {
 			rtcninjaTemasys({}, {},
