@@ -26,9 +26,13 @@ var phone_hold_button = null;
 var phone_reject_button = null;
 var phone_mute_button = null;
 var phone_hangup_button = null;
+var phone_full_screen_button = null;
+var message_button = null;
 //var phone_chat_button = null;
 
 var videoLocal, videoRemote;
+
+var callType = null;
 
 var txtRegStatus, txtCallStatus;
 
@@ -50,6 +54,7 @@ var viewVideoLocal, viewVideoRemote, viewLocalScreencast; // <video> (webrtc) or
 var oConfigCall;
 var oReadyStateTimer;
 
+var mychatSession;
 
 $(document).ready(function() {
     console.info("Starting phone app ...");
@@ -62,9 +67,12 @@ $(document).ready(function() {
     audioRemote = document.getElementById("audio_remote");
     txtRegStatus = document.getElementById("txtRegStatus");
     txtCallStatus = document.getElementById("txtCallStatus");
+
     ringtone = document.getElementById('ringtone');
     ringbacktone = document.getElementById('ringbacktone');
-
+    //ringtone.play();
+    //startRingTone();
+    //ringbacktone.play();
     //login wss inputs
     login_display_name = $("#display_name");
     login_realm = $("#realm");
@@ -93,19 +101,30 @@ $(document).ready(function() {
 
     //phone buttons
     phone_accept_button = $('#acceptbtn');
+    phone_accept_button.click(function(){
+        sipAnswer();
+        //moveUIToState('incall');
+    });
+
     //phone_accept_button.prop('disabled', true);
-    phone_call_button = $("#callbtn");
+    phone_call_button = $("#callvideobtn");
+    phone_call_button.prop('disabled', true);
+    //phone_call_button.text('some text');
     phone_call_button.click(function(){
         sipCall("call-audiovideo");
     });
+
     phone_call_audio_button = $('#callaudiobtn');
     phone_call_audio_button.click(function() {
-        /* Act on the event */
         sipCall("call-audio");
     });
+
     //phone_call_button.prop('disabled', true);
     //phone_chat_button = $("#phone > .controls > .dialbox > .dial-buttons > .chat");
     phone_reject_button = $('#rejectbtn');
+    phone_reject_button.click(function(){
+        sipHangUp();
+    });
 
     phone_hold_button = $("#holdbtn");
     phone_hold_button.click(function() {
@@ -120,24 +139,29 @@ $(document).ready(function() {
     });
     //phone_reject_button.prop('disabled', true);
     phone_hangup_button = $('#hangupbtn');
+    phone_hangup_button.click(function(){
+        sipHangUp();
+        //moveUIToState('connected');
+    });
+
+    phone_full_screen_button = $('#fullscreenbtn');
+    phone_full_screen_button.click(function() {
+        toggleFullScreen();
+    });
+
+    message_button = $('#messagebtn');
+    message_button.click(function() {
+        sendMessage();
+    });
     //phone_hangup_button.prop('disabled', true);
 
     //phone_call_button.click(sipcall(true));
-    phone_accept_button.click(function(){
-        sipAnswer();
-    });
-    phone_reject_button.click(function(){
-        sipHangUp();
-    });
-    phone_hangup_button.click(function(){
-        sipHangUp();
-    });
-
+    
     //phone_call_button.prop('disabled', true);
-    //moveUIToState('phone');
-
+    
+    moveUIToState('disconnected');
     SIPml.init(postInit);
-
+    
 });
 
 function postInit() {
@@ -207,15 +231,18 @@ function sipRegister() {
     // catch exception for IE (DOM not ready)
     try {
         //btnRegister.disabled = true;
+        moveUIToState('connected');
         if (!login_realm.val() || !login_private_identity.val() || !login_public_identity.val()) {
             txtRegStatus.innerHTML = '<b>Please fill madatory fields (*)</b>';
             //btnRegister.disabled = false;
+            moveUIToState('disconnected');
             return;
         }
         var o_impu = tsip_uri.prototype.Parse(login_public_identity.val());
         if (!o_impu || !o_impu.s_user_name || !o_impu.s_host) {
             txtRegStatus.innerHTML = "<b>[" + login_public_identity.val() + "] is not a valid Public identity</b>";
             //btnRegister.disabled = false;
+            moveUIToState('disconnected');
             return;
         }
 
@@ -260,6 +287,7 @@ function sipRegister() {
     catch (e) {
         txtRegStatus.innerHTML = "<b>2:" + e + "</b>";
     }
+    moveUIToState('connected');
     //btnRegister.disabled = false;
 }
 
@@ -272,7 +300,7 @@ function sipUnRegister() {
 
 // makes a call (SIP INVITE)
 function sipCall(s_type) {
-    //if (oSipStack && !oSipSessionCall) {
+    if (oSipStack && !oSipSessionCall) {
         if (s_type == 'call-screenshare') {
             if (!SIPml.isScreenShareSupported()) {
                 alert('Screen sharing not supported. Are you using chrome 26+?');
@@ -288,6 +316,7 @@ function sipCall(s_type) {
         }
         //btnCall.disabled = true;
         //btnHangUp.disabled = false;
+        moveUIToState('calling');
 
         if (window.localStorage) {
             oConfigCall.bandwidth = tsk_string_to_object(window.localStorage.getItem('org.doubango.expert.bandwidth')); // already defined at stack-level but redifined to use latest values
@@ -305,7 +334,7 @@ function sipCall(s_type) {
             return;
         }
         //saveCallOptions();
-    //}
+    }
     //else if (oSipSessionCall) {
     //    txtCallStatus.innerHTML = '<i>Connecting...</i>';
     //    oSipSessionCall.accept(oConfigCall);
@@ -316,7 +345,34 @@ function sipAnswer(){
     if(oSipSessionCall){
         txtCallStatus.innerHTML = '<i>Connecting...</i>';
         oSipSessionCall.accept(oConfigCall);
+        //moveUIToState('incall');
     }
+}
+
+var messageSession;
+var IMListener = function(e){
+        console.info('session event='+e.type);
+}
+
+function sendMessage(){
+    console.log('We can send IM+++++++');
+    messageSession = oSipStack.newSession( 'message',{
+            events_listener: { events: '*', listener: IMListener}
+    });
+    //var dtime = new Date();
+    //var outtime = dtime.getHours()+":"+dtime.getMinutes+":"+dtime.getSeconds;
+    console.log('trying to send IM++++');
+    //var myvalpeer = $("#chatpeers").val();
+    var mypeer = "6000";
+    //messageSession.send($("#chatpeers").val(),$("#sendchat").val(),'text/plain;charset=utf-8');
+    messageSession.send(mypeer,"VIVIVIVIVIVIVIVIVIV",'text/plain;charset=utf-8');
+    //$("#recchat").html($("#recchat").text()+'('+outtime+')'+$("#sendchat").val()+"\n");
+    //$("#recchat").html($("#recchat").text()+'>'+$("#sendchat").val()+"\n");
+    //$('#recchat').scrollTop($('#recchat')[0].scrollHeight);
+
+    //$("#chatarea").html($("#chatarea").html()+"<p>> "+$("#sendchat").val()+"</p>");
+    //$('#chatarea').scrollTop($('#chatarea')[0].scrollHeight);
+    //$("#sendchat").val('');
 }
 
 // Callback function for SIP Stacks
@@ -342,7 +398,8 @@ function onSipEventStack(e /*SIPml.Stack.Event*/) {
                 }
                 catch (e) {
                     txtRegStatus.value = txtRegStatus.innerHTML = "<b>1:" + e + "</b>";
-                    btnRegister.disabled = false;
+                    //btnRegister.disabled = false;
+                    moveUIToState('disconnected');
                 }
                 break;
             }
@@ -354,6 +411,7 @@ function onSipEventStack(e /*SIPml.Stack.Event*/) {
                 oSipSessionCall = null;
 
                 //uiOnConnectionEvent(false, false);
+                moveUIToState('disconnected');
 
                 stopRingbackTone();
                 stopRingTone();
@@ -376,18 +434,41 @@ function onSipEventStack(e /*SIPml.Stack.Event*/) {
                     oSipSessionCall = e.newSession;
                     // start listening for events
                     oSipSessionCall.setConfiguration(oConfigCall);
-
+                    startRingTone();
+                    moveUIToState('incoming');
                     //uiBtnCallSetText('Answer');
                     //btnHangUp.value = 'Reject';
                     //btnCall.disabled = false;
                     //btnHangUp.disabled = false;
 
-                    startRingTone();
+                    
 
                     var sRemoteNumber = (oSipSessionCall.getRemoteFriendlyName() || 'unknown');
                     txtCallStatus.innerHTML = "<i>Incoming call from [<b>" + sRemoteNumber + "</b>]</i>";
                     //showNotifICall(sRemoteNumber);
                 }
+                break;
+            }
+        case 'i_new_message': {
+
+                console.info('++++++++ Receiving SIP SMS +++++++++++++');
+                mychatSession = e.newSession;
+                mychatSession.accept();
+
+                var sRemoteNumber = (mychatSession.getRemoteFriendlyName() || 'unknown');
+
+                console.info('IMmsg = '+e.getContentString()+' IMtype = '+e.getContentType()+' number: '+sRemoteNumber);
+                //$("#recchat").html($("#recchat").text()+e.getContentString()+"\n");
+                //$('#recchat').scrollTop($('#recchat')[0].scrollHeight);
+
+                //$("#chatarea").html($("#chatarea").html()+"<b>"+e.getContentString()+"</b>");
+                //$('#chatarea').scrollTop($('#chatarea')[0].scrollHeight);
+
+                //newmessageTone();
+                //destroy the call session
+                //mychatSession.hangup();
+                mychatSession = null;
+
                 break;
             }
 
@@ -415,32 +496,66 @@ function onSipEventSession(e /* SIPml.Session.Event */) {
     tsk_utils_log_info('==session event = ' + e.type);
 
     switch (e.type) {
-        case 'connecting': case 'connected':
+        case 'connecting':
             {
                 var bConnected = (e.type == 'connected');
                 if (e.session == oSipSessionRegister) {
                     //uiOnConnectionEvent(bConnected, !bConnected);
                     txtRegStatus.innerHTML = "<i>" + e.description + "</i>";
+                    moveUIToState('connecting');
                 }
                 else if (e.session == oSipSessionCall) {
+                    //CHECK AGAIN
                     //btnHangUp.value = 'HangUp';
                     //btnCall.disabled = true;
+                    //phone_call_button.prop('disabled', true);
                     //btnHangUp.disabled = false;
                     //btnTransfer.disabled = false;
+                    //moveUIToState('connected');
+                    if (window.btnBFCP) window.btnBFCP.disabled = false;
+
+                    moveUIToState('incall');
+                    //txtCallStatus.innerHTML = "<i>" + e.description + "</i>";
+                    //divCallOptions.style.opacity = bConnected ? 1 : 0;
+
+                    if (SIPml.isWebRtc4AllSupported()) { // IE don't provide stream callback
+                        //uiVideoDisplayEvent(false, true);
+                        //uiVideoDisplayEvent(true, true);
+                    }
+                }
+                break;
+            } // 'connecting' | 'connected'
+        case 'connected':
+            {
+                var bConnected = (e.type == 'connected');
+                if (e.session == oSipSessionRegister) {
+                    //uiOnConnectionEvent(bConnected, !bConnected);
+                    txtRegStatus.innerHTML = "<i>" + e.description + "</i>";
+                    moveUIToState('connected');
+                }
+                else if (e.session == oSipSessionCall) {
+                    //CHECK AGAIN
+                    //btnHangUp.value = 'HangUp';
+                    //btnCall.disabled = true;
+                    //phone_call_button.prop('disabled', true);
+                    //btnHangUp.disabled = false;
+                    //btnTransfer.disabled = false;
+                    //moveUIToState('connected');
                     if (window.btnBFCP) window.btnBFCP.disabled = false;
 
                     if (bConnected) {
                         stopRingbackTone();
                         stopRingTone();
 
-                        if (oNotifICall) {
-                            oNotifICall.cancel();
-                            oNotifICall = null;
-                        }
+                        //if (oNotifICall) {
+                        //    oNotifICall.cancel();
+                        //    oNotifICall = null;
+                        //}
                     }
 
                     //txtCallStatus.innerHTML = "<i>" + e.description + "</i>";
                     //divCallOptions.style.opacity = bConnected ? 1 : 0;
+                    moveUIToState('incall');
 
                     if (SIPml.isWebRtc4AllSupported()) { // IE don't provide stream callback
                         //uiVideoDisplayEvent(false, true);
@@ -456,6 +571,7 @@ function onSipEventSession(e /* SIPml.Session.Event */) {
 
                     oSipSessionCall = null;
                     oSipSessionRegister = null;
+                    moveUIToState('connected');
 
                     //txtRegStatus.innerHTML = "<i>" + e.description + "</i>";
                 }
@@ -646,7 +762,7 @@ function onSipEventSession(e /* SIPml.Session.Event */) {
                         if (oSipSessionCall.bHeld) {
                             oSipSessionCall.resume();
                         }
-                        btnTransfer.disabled = false;
+                        //btnTransfer.disabled = false;
                     }
                 }
                 break;
@@ -700,7 +816,7 @@ function sipToggleHoldResume() {
     }
 }
 
-//CHECKAGAIN
+//CHECKAGAIN and chang to check box
 // Mute or Unmute the call
 function sipToggleMute() {
     if (oSipSessionCall) {
@@ -713,7 +829,13 @@ function sipToggleMute() {
             return;
         }
         oSipSessionCall.bMute = bMute;
+
         //btnMute.value = bMute ? "Unmute" : "Mute";
+        if(bMute) {
+            phone_mute_button.text('Unmute');
+        } else {
+            phone_mute_button.text('Mute');
+        }
     }
 }
 
@@ -754,7 +876,7 @@ function stopRingbackTone() {
     catch (e) { }
 }
 
-//CHECKAGAIN
+//WORKS BUT CHECKAGAIN
 function toggleFullScreen() {
     if (videoRemote.webkitSupportsFullscreen) {
         fullScreen(!videoRemote.webkitDisplayingFullscreen);
@@ -776,11 +898,26 @@ function fullScreen(b_fs) {
     }
     else {
         if (tsk_utils_have_webrtc4npapi()) {
-            try { if (window.__o_display_remote) window.__o_display_remote.setFullScreen(b_fs); }
-            catch (e) { divVideo.setAttribute("class", b_fs ? "full-screen" : "normal-screen"); }
+            try {
+               if (window.__o_display_remote) window.__o_display_remote.setFullScreen(b_fs); 
+            }
+            catch (e) {
+               //divVideo.setAttribute("class", b_fs ? "full-screen" : "normal-screen");
+               if(b_fs){
+                    $('divVideo').addClass('full-screen')
+               } else {
+                    $('divVideo').addClass('normal-screen')
+               }
+               
+            }
         }
         else {
-            divVideo.setAttribute("class", b_fs ? "full-screen" : "normal-screen");
+            //divVideo.setAttribute("class", b_fs ? "full-screen" : "normal-screen");
+            if(b_fs){
+                $('divVideo').addClass('full-screen')
+           } else {
+                $('divVideo').addClass('normal-screen')
+           }
         }
     }
 }
@@ -872,10 +1009,21 @@ function uiBtnCallSetText(s_text) {
 }
 
 function uiCallTerminated(s_description) {
+    //reset everything
+
+
+
+    //************Remove comment and remove this on hangupbtn envent to enable auto terminate ui
+    moveUIToState('connected');
+
+
+    phone_mute_button.text('')
+
     //uiBtnCallSetText("Call");
     //btnHangUp.value = 'HangUp';
     //btnHoldResume.value = 'hold';
     //btnMute.value = "Mute";
+    phone_mute_button.text('Mute');
     //btnCall.disabled = false;
     //btnHangUp.disabled = true;
     //if (window.btnBFCP) window.btnBFCP.disabled = true;
@@ -897,316 +1045,93 @@ function uiCallTerminated(s_description) {
     //uiVideoDisplayEvent(false, false);
     //uiVideoDisplayEvent(true, false);
 
-    //setTimeout(function () { if (!oSipSessionCall) txtCallStatus.innerHTML = ''; }, 2500);
+    setTimeout(function () { if (!oSipSessionCall) txtCallStatus.innerHTML = ''; }, 2500);
 }
 
-
-/**
- * Initialize sip stack
- */
-function createSipStack() {
-    var display_name = null;
-    var sip_uri = null;
-    var sip_password = null;
-    var ws_servers = null;
-    //get all configure value
-    if (login_display_name.val() != "")
-        display_name = login_display_name.val();
-    if (login_sip_uri.val() != "")
-        sip_uri = login_sip_uri.val();
-    if (login_sip_password.val() != "")
-        sip_password = login_sip_password.val();
-    if (login_ws_servers.val() != "") {
-        ws_servers = login_ws_servers.val();
-    // To JSON (in case of a simple string we must enclose between ").
-    if (ws_servers) {
-        if (ws_servers.charAt(0) != "[")
-            ws_servers = '"' + ws_servers + '"'
-        ws_servers = window.JSON.parse(ws_servers);
-        }
-    }
-    if (! sip_uri) {
-        return false;
-    }
-    else if (! ws_servers) {
-        return false;
-    }
-    peerconnection_config = JSON.parse('{ "iceServers": [ {"urls": ["stun:stun.l.google.com:19302"]} ], "gatheringTimeout": 2000 }');
-    var configuration = {
-        uri: sip_uri,
-        password: sip_password,
-        ws_servers: ws_servers,
-        display_name: display_name,
-        //no_answer_timeout: 20,
-        session_timers: false,
-        register: true,
-        trace_sip: true
-        //connection_recovery_max_interval: 30,
-        //connection_recovery_min_interval: 2
-    };
-
-    console.info("Create SIP stack with configuration: " + JSON.stringify(configuration));
-    try {
-        ua = new JsSIP.UA(configuration);
-        phone_call_button.prop('disabled', false);
-        //connect_button.prop('disabled', true);
-    } catch (e) {
-        console.debug(e.toString());
-        return;
-    }
-
-    ua.on('connected', function(e){ 
-        console.debug("Connected to websocket.");
-        //document.title = PageTitle;
-        ws_was_connected = true;
-    });
-
-    ua.on('disconnected', function(e){ 
-        console.debug("Disconnected from websocket");
-        //document.title = PageTitle;
-        if (! ws_was_connected) {
-            //alert("WS connection error:\n\n- WS close code: " + e.data.code + "\n- WS close reason: " + e.data.reason);
-            console.error("WS connection error | WS close code: " + e.code + " | WS close reason: " + e.reason);
-            //if (! window.CustomJsSIPSettings) { window.location.reload(false); }
-        }
-    });
-
-    ua.on('newMessage', function(e) {
-        e.data.message.accept();
-    });
-
-    ua.on('newRTCSession', function(e) {
-        console.debug("New session created");
-        //incoming call
-        if(active_call === null && e.session !== undefined) {
-            // new incoming call
-            active_call = e.session;
-            new_call(e);
-            // ui
-            if(e.session.direction === 'incoming') {
-                moveUIToState('incoming');
-                //message: "" + active_call.remote_identity.display_name + " is calling you"
-            } else {
-                moveUIToState('calling');
-            }
-        } else {
-            e.data.session.terminate({status_code: 486});
-        }
-    });
-
-    ua.on('registered', function(e) {
-        console.debug("Registered.");
-    });
-
-    ua.on('unregistered', function(e){
-        console.debug("Unregistered.");
-    });
-
-    ua.on('registrationFailed', function(e){
-        console.debug("Registration failed.");
-    });
-
-    console.info("Starting stack ...");
-    ua.start();
-}
-
-function new_call(e){
-    var call = e.session,//call == _Session now//call = RTCSession {ua: UA, status: 4, dialog: null, earlyDialogs: Object, connection: null…}, e = Object {originator: "remote", session: RTCSession, r
-        uri = call.remote_identity.uri,
-        display_name = call.remote_identity.display_name || uri.user;
-
-    active_call.on('connecting', function() {
-        // TMP
-        if (active_call.connection.getLocalStreams().length > 0) {
-          window.localStream = active_call.connection.getLocalStreams()[0];
-        }
-    });
-
-    active_call.on('confirmed', function(e) {
-        console.log('call confirmed');
-        //callStart = new Date().getTime();
-        //chrome.notifications.clear("ring", function() {});
-        //var selfView = document.getElementById('selfView');
-        if(active_call.connection.getLocalStreams().length > 0){
-            var local_stream = active_call.connection.getLocalStreams()[0];
-            selfView = JsSIP.rtcninja.attachMediaStream(selfView, local_stream);
-            selfView.volume = 0;
-
-            // TMP
-            window.localStream = localStream;
-        }
-        moveUIToState('incall');
-    });
-
-    // Started
-    active_call.on('accepted',function(e){
-        console.log('call accepted');
-        //Attach the streams to the views if it exists.     
-
-        /*if (e.originator === 'remote') {
-          if (e.response.getHeader('X-Can-Renegotiate') === 'false') {
-            call.data.remoteCanRenegotiateRTC = false;
-          }
-          else {
-            call.data.remoteCanRenegotiateRTC = true;
-          }
-        }*/
-    });
-
-    active_call.on('progress', function(e) {
-        if (e.originator === 'remote') {
-            //e.response.body = null;
-        }
-    });
-
-    active_call.on('addstream', function(e) {
-        var remoteStream = e.stream;
-        console.log('remote stream added');
-        // Attach remote stream to remoteView
-        //var remoteView = document.getElementById('remoteView');
-        remoteView = JsSIP.rtcninja.attachMediaStream(remoteView, remoteStream);
-    });
-
-    active_call.on('failed', function(e) {
-        console.log('call failed with cause: '+ e.cause);
-        active_call = null;
-        moveUIToState('phone');
-        //setTimeout(function() { moveUIToState('phone'); }, 1500);
-        //chrome.notifications.clear("ring", function() {});
-    });
-
-    // NewDTMF
-    active_call.on('newDTMF',function(e) {
-        //GUI.playSound("sounds/dialpad/" + e.dtmf.tone + ".ogg");
-    });
-
-    active_call.on('hold',function(e) {
-        //GUI.playSound("sounds/dialpad/pound.ogg");
-    });
-
-    active_call.on('unhold',function(e) {
-        //GUI.playSound("sounds/dialpad/pound.ogg");
-    });
-
-    active_call.on('ended', function(e) {
-        console.debug("Call terminated");
-        moveUIToState('phone');
-        active_call = null; 
-        //chrome.notifications.clear("ring", function() {});
-    });
-
-    active_call.on('reinvite', function(e) {
-        console.log('call reinvited with request: '+ e.request);
-    });
-}
-
-//call
-function sipcall(isvideosupport) {
-    if(active_call === null) {
-        //console.debug("New call to " + $('#display').val());
-        var eventHandlers = {};
-        
-        var options = {
-            'pcConfig': peerconnection_config,
-            'eventHandlers': eventHandlers,
-            'mediaConstraints': {audio: true, video: isvideosupport},
-            'rtcOfferConstraints': {offerToReceiveAudio: 1, offerToReceiveVideo: 1}
-        };
-        //if(!ua === null){
-            //active_call = ua.call(callTarget.val(), options);
-            ua.call(callTarget.val(), options);
-        //}
-        
-        
-    } else {
-        console.log("Hangup active call");
-        active_call.terminate();
-    }
-}
-
-///answer
-function accept() {
-    console.log('Tryit: buttonAnswerClick');
-    if (active_call !== null) {
-        //active_call.answer({mediaConstraints: {audio: true, video: false}});
-        active_call.answer({
-            pcConfig: peerconnection_config,
-            // TMP:
-            mediaConstraints: {audio: true, video: true},
-            rtcOfferConstraints: {
-                offerToReceiveAudio: 1,
-                offerToReceiveVideo: 1
-            },
-        });
-
-        moveUIToState('incall');
-    }
-}
-
-function hangup() {
-    if (active_call !== null) {
-        active_call.terminate();
-        moveUIToState('phone');
-    }
-}
-
-function reject() {
-    if (active_call !== null) {
-        active_call.terminate(486);
-        moveUIToState('phone');
-    }
-}
 
 function moveUIToState(panel) {
     if(panel === 'disconnected'){
-        phone_call_button.prop(disabled: 'true');
-    } else if (panell === 'connected'){
+        connect_button.prop('disabled', false);
+        unconnect_button.prop('disabled', false);
+        phone_call_button.prop('disabled', true);
+        phone_call_audio_button.prop('disabled', true);
 
-    }
-    if (panel === 'phone') {
-        // hide all
-        incomingCallBox.hide();
+        //hide callingbox
         inCallBox.hide();
+        incomingCallBox.hide();
+        //hide incall box
+
+
+    } else if (panel === 'connecting'){
+        connect_button.prop('disabled', true);
+        unconnect_button.prop('disabled', false);
+        phone_call_button.prop('disabled', true);
+        phone_call_audio_button.prop('disabled', true);
+
+        //hide callingbox
+        inCallBox.hide();
+        incomingCallBox.hide();
+        //hide incall box
+    } else if (panel === 'connected'){
+        connect_button.prop('disabled', true);
+        unconnect_button.prop('disabled', false);
+        phone_call_button.prop('disabled', false);
+        phone_call_audio_button.prop('disabled', false);
+
+        //hide callingbox
+        inCallBox.hide();
+        incomingCallBox.hide();
+        //hide incall box
+    } else if (panel === 'phone') {
+        // hide all
+        //incomingCallBox.hide();
+        //inCallBox.hide();
 
     } else if (panel === 'incoming') {
+
+        //hide all box
         inCallBox.hide();
-        incomingCallBox.show();
+        //show incoming box
+        incomingCallBox.show('fast', function() {
+            
+        });
+
         $('#caller').val("" + active_call.remote_identity.display_name);
         //callTarget.val("" + active_call.remote_identity.display_name + "is calling you");
         //phone_accept_button.prop('disabled', false);
         //phone_reject_button.prop('disabled', false);
     
     } else if (panel === 'calling') {
+        //show calling box ( same to in call box)
+        inCallBox.hide();
+        incomingCallBox.hide();
+        //disable all btns in calling box except hang up
+        phone_hangup_button.prop('disabled', false);
+        phone_mute_button.prop('disabled', true);
+
+        connect_button.prop('disabled', true);
+        unconnect_button.prop('disabled', false);
+        phone_call_button.prop('disabled', true);
+        phone_call_audio_button.prop('disabled', true);
+
 
     } else if (panel === 'incall') {
+        //hide calling box and incoming box
         incomingCallBox.hide();
+
+        //show in call box
         inCallBox.show();
-        ///phone_hangup_button.prop('disabled', false);
+
+        //disable all btns in calling box except hang up
+        phone_hangup_button.prop('disabled', false);
+        phone_mute_button.prop('disabled', false);
+        
+        connect_button.prop('disabled', true);
+        unconnect_button.prop('disabled', false);
+        phone_call_button.prop('disabled', true);
+        phone_call_audio_button.prop('disabled', true);
     }
-}*/
-
-/*function createACallBox(call){
-    <div class="panel panel-default" id="incomingbox">
-        <div class="panel-heading">
-            <h4 class="modal-title">Incoming call...</h4>
-        </div>
-        <div class="panel-body">                    
-            <p>You have an incoming video call from <span id="caller"></span></p>
-            <div class="btn-group btn-group-justified">
-                <div class="btn-group">
-                    <button type="button" class="btn btn-success accept" id="acceptbtn">Accept</button>
-                </div>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-danger reject" id="rejectbtn">Reject</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    var incomingbox = $("<div class='panel panel-default' id='" + call.)
-    $('#sessions').append()
-}*/
-
+}
 
 /*$(document).unload(function() {
     console.info("Unload application");
@@ -1218,4 +1143,4 @@ function moveUIToState(panel) {
         ua.unregister();
         ua.stop();
     }
-});
+});*/
