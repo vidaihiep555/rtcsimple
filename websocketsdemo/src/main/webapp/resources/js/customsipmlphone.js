@@ -20,8 +20,11 @@ var incomingCallBox = null;
 var inCallBox = null;
 
 var phone_call_button = null;
+var phone_call_audio_button = null;
 var phone_accept_button = null;
+var phone_hold_button = null;
 var phone_reject_button = null;
+var phone_mute_button = null;
 var phone_hangup_button = null;
 //var phone_chat_button = null;
 
@@ -35,6 +38,9 @@ var peerconnection_config = peerconnection_config || undefined;
 
 var sTransferNumber;
 var oRingTone, oRingbackTone;
+
+var ringtone, ringbacktone;
+
 var oSipStack, oSipSessionRegister, oSipSessionCall, oSipSessionTransferCall;
 var videoRemote, videoLocal, audioRemote;
 var bFullScreen = false;
@@ -56,6 +62,8 @@ $(document).ready(function() {
     audioRemote = document.getElementById("audio_remote");
     txtRegStatus = document.getElementById("txtRegStatus");
     txtCallStatus = document.getElementById("txtCallStatus");
+    ringtone = document.getElementById('ringtone');
+    ringbacktone = document.getElementById('ringbacktone');
 
     //login wss inputs
     login_display_name = $("#display_name");
@@ -79,36 +87,53 @@ $(document).ready(function() {
     callTarget = $('#callTarget');
 
     incomingCallBox = $('#incomingbox');
-    incomingCallBox.hide();
+    //incomingCallBox.hide();
     inCallBox = $('#incallbox');
-    inCallBox.hide();
+    //inCallBox.hide();
 
     //phone buttons
     phone_accept_button = $('#acceptbtn');
     //phone_accept_button.prop('disabled', true);
     phone_call_button = $("#callbtn");
     phone_call_button.click(function(){
-        sipcall(true);
+        sipCall("call-audiovideo");
+    });
+    phone_call_audio_button = $('#callaudiobtn');
+    phone_call_audio_button.click(function() {
+        /* Act on the event */
+        sipCall("call-audio");
     });
     //phone_call_button.prop('disabled', true);
     //phone_chat_button = $("#phone > .controls > .dialbox > .dial-buttons > .chat");
     phone_reject_button = $('#rejectbtn');
+
+    phone_hold_button = $("#holdbtn");
+    phone_hold_button.click(function() {
+        /* Act on the event */
+        sipToggleHoldResume();
+    });
+
+    phone_mute_button = $("#mutebtn");
+    phone_mute_button.click(function() {
+        /* Act on the event */
+        sipToggleMute();
+    });
     //phone_reject_button.prop('disabled', true);
-    phone_hangup_button = $('#hangungbtn');
+    phone_hangup_button = $('#hangupbtn');
     //phone_hangup_button.prop('disabled', true);
 
     //phone_call_button.click(sipcall(true));
     phone_accept_button.click(function(){
-        accept();
+        sipAnswer();
     });
     phone_reject_button.click(function(){
-        reject();
+        sipHangUp();
     });
     phone_hangup_button.click(function(){
-        hangup();
+        sipHangUp();
     });
 
-    phone_call_button.prop('disabled', true);
+    //phone_call_button.prop('disabled', true);
     //moveUIToState('phone');
 
     SIPml.init(postInit);
@@ -247,7 +272,7 @@ function sipUnRegister() {
 
 // makes a call (SIP INVITE)
 function sipCall(s_type) {
-    if (oSipStack && !oSipSessionCall && !tsk_string_is_null_or_empty(callTarget.val())) {
+    //if (oSipStack && !oSipSessionCall) {
         if (s_type == 'call-screenshare') {
             if (!SIPml.isScreenShareSupported()) {
                 alert('Screen sharing not supported. Are you using chrome 26+?');
@@ -275,13 +300,20 @@ function sipCall(s_type) {
         if (oSipSessionCall.call(callTarget.val()) != 0) {
             oSipSessionCall = null;
             txtCallStatus.value = 'Failed to make call';
-            btnCall.disabled = false;
-            btnHangUp.disabled = true;
+            //btnCall.disabled = false;
+            //btnHangUp.disabled = true;
             return;
         }
         //saveCallOptions();
-    }
-    else if (oSipSessionCall) {
+    //}
+    //else if (oSipSessionCall) {
+    //    txtCallStatus.innerHTML = '<i>Connecting...</i>';
+    //    oSipSessionCall.accept(oConfigCall);
+    //}
+}
+
+function sipAnswer(){
+    if(oSipSessionCall){
         txtCallStatus.innerHTML = '<i>Connecting...</i>';
         oSipSessionCall.accept(oConfigCall);
     }
@@ -323,8 +355,8 @@ function onSipEventStack(e /*SIPml.Stack.Event*/) {
 
                 //uiOnConnectionEvent(false, false);
 
-                //stopRingbackTone();
-                //stopRingTone();
+                stopRingbackTone();
+                stopRingTone();
 
                 //uiVideoDisplayShowHide(false);
                 //divCallOptions.style.opacity = 0;
@@ -346,9 +378,9 @@ function onSipEventStack(e /*SIPml.Stack.Event*/) {
                     oSipSessionCall.setConfiguration(oConfigCall);
 
                     //uiBtnCallSetText('Answer');
-                    btnHangUp.value = 'Reject';
-                    btnCall.disabled = false;
-                    btnHangUp.disabled = false;
+                    //btnHangUp.value = 'Reject';
+                    //btnCall.disabled = false;
+                    //btnHangUp.disabled = false;
 
                     startRingTone();
 
@@ -361,15 +393,15 @@ function onSipEventStack(e /*SIPml.Stack.Event*/) {
 
         case 'm_permission_requested':
             {
-                divGlassPanel.style.visibility = 'visible';
+                //divGlassPanel.style.visibility = 'visible';
                 break;
             }
         case 'm_permission_accepted':
         case 'm_permission_refused':
             {
-                divGlassPanel.style.visibility = 'hidden';
+                //divGlassPanel.style.visibility = 'hidden';
                 if (e.type == 'm_permission_refused') {
-                    //uiCallTerminated('Media stream permission denied');
+                    uiCallTerminated('Media stream permission denied');
                 }
                 break;
             }
@@ -398,8 +430,8 @@ function onSipEventSession(e /* SIPml.Session.Event */) {
                     if (window.btnBFCP) window.btnBFCP.disabled = false;
 
                     if (bConnected) {
-                        //stopRingbackTone();
-                        //stopRingTone();
+                        stopRingbackTone();
+                        stopRingTone();
 
                         if (oNotifICall) {
                             oNotifICall.cancel();
@@ -408,7 +440,7 @@ function onSipEventSession(e /* SIPml.Session.Event */) {
                     }
 
                     //txtCallStatus.innerHTML = "<i>" + e.description + "</i>";
-                    divCallOptions.style.opacity = bConnected ? 1 : 0;
+                    //divCallOptions.style.opacity = bConnected ? 1 : 0;
 
                     if (SIPml.isWebRtc4AllSupported()) { // IE don't provide stream callback
                         //uiVideoDisplayEvent(false, true);
@@ -428,7 +460,7 @@ function onSipEventSession(e /* SIPml.Session.Event */) {
                     //txtRegStatus.innerHTML = "<i>" + e.description + "</i>";
                 }
                 else if (e.session == oSipSessionCall) {
-                    //uiCallTerminated(e.description);
+                    uiCallTerminated(e.description);
                 }
                 break;
             } // 'terminating' | 'terminated'
@@ -443,7 +475,7 @@ function onSipEventSession(e /* SIPml.Session.Event */) {
         case 'm_stream_video_local_removed':
             {
                 if (e.session == oSipSessionCall) {
-                    uiVideoDisplayEvent(true, false);
+                    //uiVideoDisplayEvent(true, false);
                 }
                 break;
             }
@@ -657,12 +689,12 @@ function sipTransfer() {
 function sipToggleHoldResume() {
     if (oSipSessionCall) {
         var i_ret;
-        btnHoldResume.disabled = true;
+        //btnHoldResume.disabled = true;
         txtCallStatus.innerHTML = oSipSessionCall.bHeld ? '<i>Resuming the call...</i>' : '<i>Holding the call...</i>';
         i_ret = oSipSessionCall.bHeld ? oSipSessionCall.resume() : oSipSessionCall.hold();
         if (i_ret != 0) {
             txtCallStatus.innerHTML = '<i>Hold / Resume failed</i>';
-            btnHoldResume.disabled = false;
+            //btnHoldResume.disabled = false;
             return;
         }
     }
@@ -681,11 +713,10 @@ function sipToggleMute() {
             return;
         }
         oSipSessionCall.bMute = bMute;
-        btnMute.value = bMute ? "Unmute" : "Mute";
+        //btnMute.value = bMute ? "Unmute" : "Mute";
     }
 }
 
-//CHECKAGAIN
 // terminates the call (SIP BYE or CANCEL)
 function sipHangUp() {
     if (oSipSessionCall) {
@@ -767,7 +798,7 @@ function showNotifICall(s_number) {
     }
 }
 
-
+//IGNORE
 function uiOnConnectionEvent(b_connected, b_connecting) { // should be enum: connecting, connected, terminating, terminated
     btnRegister.disabled = b_connected || b_connecting;
     btnUnRegister.disabled = !b_connected && !b_connecting;
@@ -841,13 +872,13 @@ function uiBtnCallSetText(s_text) {
 }
 
 function uiCallTerminated(s_description) {
-    uiBtnCallSetText("Call");
-    btnHangUp.value = 'HangUp';
-    btnHoldResume.value = 'hold';
-    btnMute.value = "Mute";
-    btnCall.disabled = false;
-    btnHangUp.disabled = true;
-    if (window.btnBFCP) window.btnBFCP.disabled = true;
+    //uiBtnCallSetText("Call");
+    //btnHangUp.value = 'HangUp';
+    //btnHoldResume.value = 'hold';
+    //btnMute.value = "Mute";
+    //btnCall.disabled = false;
+    //btnHangUp.disabled = true;
+    //if (window.btnBFCP) window.btnBFCP.disabled = true;
 
     oSipSessionCall = null;
 
@@ -856,7 +887,7 @@ function uiCallTerminated(s_description) {
 
     txtCallStatus.innerHTML = "<i>" + s_description + "</i>";
     //uiVideoDisplayShowHide(false);
-    divCallOptions.style.opacity = 0;
+    //divCallOptions.style.opacity = 0;
 
     if (oNotifICall) {
         oNotifICall.cancel();
@@ -866,14 +897,14 @@ function uiCallTerminated(s_description) {
     //uiVideoDisplayEvent(false, false);
     //uiVideoDisplayEvent(true, false);
 
-    setTimeout(function () { if (!oSipSessionCall) txtCallStatus.innerHTML = ''; }, 2500);
+    //setTimeout(function () { if (!oSipSessionCall) txtCallStatus.innerHTML = ''; }, 2500);
 }
 
 
 /**
  * Initialize sip stack
  */
-/*function createSipStack() {
+function createSipStack() {
     var display_name = null;
     var sip_uri = null;
     var sip_password = null;
@@ -1019,7 +1050,7 @@ function new_call(e){
           else {
             call.data.remoteCanRenegotiateRTC = true;
           }
-        }////
+        }*/
     });
 
     active_call.on('progress', function(e) {
@@ -1127,6 +1158,11 @@ function reject() {
 }
 
 function moveUIToState(panel) {
+    if(panel === 'disconnected'){
+        phone_call_button.prop(disabled: 'true');
+    } else if (panell === 'connected'){
+
+    }
     if (panel === 'phone') {
         // hide all
         incomingCallBox.hide();
@@ -1182,4 +1218,4 @@ function moveUIToState(panel) {
         ua.unregister();
         ua.stop();
     }
-});*/
+});
