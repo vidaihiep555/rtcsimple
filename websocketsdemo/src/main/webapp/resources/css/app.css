@@ -50,12 +50,12 @@ footer {
   color: black;
 }
 
-.panel-heading {
+/*.panel-heading {
   background: none !important;
-}
+}*/
 .panel-title {
   font-size: 18px;
-  color: #999;
+  color: black;
 }
 
 
