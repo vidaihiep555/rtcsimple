@@ -15,6 +15,7 @@ var chat_message = null;
 
 var connect_button = null;
 var unconnect_button = null;
+var subscribe_button = null;
 
 var callTarget;
 
@@ -89,6 +90,11 @@ $(document).ready(function() {
     unconnect_button.click(function() {
         sipUnRegister();
     });
+
+    //subscribe_button = $('#subcribebtn');
+    //subscribe_button.click(function() {
+    //    subcribe('6000');
+    //});
 
     callTarget = $('#callTarget');
 
@@ -351,6 +357,56 @@ function sendMessage(){
     //$("#recchat").html($("#recchat").text()+'>'+$("#sendchat").val()+"\n");
     //$('#recchat').scrollTop($('#recchat')[0].scrollHeight);
 }
+
+//TESTINGGG
+/*var subscribeSession;
+var eventsListener = function(e){
+    console.info('session event = ' + e.type);
+    if(e.type == 'i_notify'){
+        console.info('NOTIFY content = ' + e.getContentString());
+        console.info('NOTIFY content-type = ' + e.getContentType());
+        txtRegStatus.innerHTML = "<i>ONLINE</i>";
+
+        if (e.getContentType() == 'application/pidf+xml') {
+            if (window.DOMParser) {
+                var parser = new DOMParser();
+                var xmlDoc = parser ? parser.parseFromString(e.getContentString(), "text/xml") : null;
+                var presenceNode = xmlDoc ? xmlDoc.getElementsByTagName ("presence")[0] : null;
+                if(presenceNode){
+                    var entityUri = presenceNode.getAttribute ("entity");
+                    var tupleNode = presenceNode.getElementsByTagName ("tuple")[0];
+                    if(entityUri && tupleNode){
+                        var statusNode = tupleNode.getElementsByTagName ("status")[0];
+                        if(statusNode){
+                            var basicNode = statusNode.getElementsByTagName ("basic")[0];
+                            if(basicNode){
+                                console.info('Presence notification: Uri = ' + entityUri + ' status = ' + basicNode.textContent);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+function subcribe(to){
+    subscribeSession = sipStack.newSession('subscribe', {
+        expires: 200,
+        events_listener: { events: '*', listener: eventsListener },
+        sip_headers: [
+                      { name: 'Event', value: 'presence' }, // only notify for 'presence' events
+                      { name: 'Accept', value: 'application/pidf+xml' } // supported content types (COMMA-sparated)
+            ],
+        sip_caps: [
+                    { name: '+g.oma.sip-im', value: null },
+                    { name: '+audio', value: null },
+                    { name: 'language', value: '\"en,fr\"' }
+            ]
+    });
+    // start watching for entity's presence status (You may track event type 'connected' to be sure that the request has been accepted by the server)
+    subscribeSession.subscribe(to);
+}*/
 
 // Callback function for SIP Stacks
 function onSipEventStack(e /*SIPml.Stack.Event*/) {
