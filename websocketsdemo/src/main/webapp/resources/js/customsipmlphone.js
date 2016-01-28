@@ -358,7 +358,7 @@ function sendMessage(){
     //$('#recchat').scrollTop($('#recchat')[0].scrollHeight);
 }
 
-//TESTINGGG
+//SUBSCRIBE TESTING
 /*var subscribeSession;
 var eventsListener = function(e){
     console.info('session event = ' + e.type);
@@ -391,7 +391,7 @@ var eventsListener = function(e){
 }
 
 function subcribe(to){
-    subscribeSession = sipStack.newSession('subscribe', {
+    subscribeSession = oSipStack.newSession('subscribe', {
         expires: 200,
         events_listener: { events: '*', listener: eventsListener },
         sip_headers: [
