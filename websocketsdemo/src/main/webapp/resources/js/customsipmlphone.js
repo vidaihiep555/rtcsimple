@@ -1,6 +1,6 @@
 var config = null;
 var ua = null;
-var active_call = null;
+//var active_call = null;
 var registered = false;
 var callStart = 0;
 var ws_was_connected = false;
@@ -31,7 +31,6 @@ var phone_mute_button = null;
 var phone_hangup_button = null;
 var phone_full_screen_button = null;
 var message_button = null;
-//var phone_chat_button = null;
 
 var videoLocal, videoRemote;
 
@@ -39,19 +38,19 @@ var callType = null;
 
 var txtRegStatus, txtCallStatus;
 
-var outgoingCall, incomingCall;
+//var outgoingCall, incomingCall;
 
 var peerconnection_config = peerconnection_config || undefined;
 
 var sTransferNumber;
-var oRingTone, oRingbackTone;
+//var oRingTone, oRingbackTone;
 
 var ringtone, ringbacktone;
 
 var oSipStack, oSipSessionRegister, oSipSessionCall, oSipSessionTransferCall;
+var messageSession;
 var videoRemote, videoLocal, audioRemote;
 var bFullScreen = false;
-var oNotifICall;
 var bDisableVideo = false;
 var viewVideoLocal, viewVideoRemote, viewLocalScreencast; // <video> (webrtc) or <div> (webrtc4all)
 var oConfigCall;
@@ -133,7 +132,7 @@ $(document).ready(function() {
     phone_mute_button.click(function() {
         sipToggleMute();
     });
-    //phone_reject_button.prop('disabled', true);
+    
     phone_hangup_button = $('#hangupbtn');
     phone_hangup_button.click(function(){
         sipHangUp();
@@ -199,8 +198,6 @@ function postInit() {
         }
     }
 
-    //btnRegister.disabled = false;
-    //document.body.style.cursor = 'default';
     oConfigCall = {
         audio_remote: audioRemote,
         video_local: viewVideoLocal,
@@ -331,7 +328,6 @@ function sipAnswer(){
     }
 }
 
-var messageSession;
 var IMListener = function(e){
         console.info('session event='+e.type);
 }
@@ -351,62 +347,9 @@ function sendMessage(){
         messageSession = null;
     } else {
         $("#chatarea").html($("#chatarea").html()+"<b>To "+callTarget.val()+": </b>"+chat_message.val()+"</br>");
-        $('#chatarea').scrollTop($('#chatarea')[0].scrollHeight);
-    }
-    //$("#recchat").html($("#recchat").text()+'('+outtime+')'+$("#sendchat").val()+"\n");
-    //$("#recchat").html($("#recchat").text()+'>'+$("#sendchat").val()+"\n");
-    //$('#recchat').scrollTop($('#recchat')[0].scrollHeight);
-}
-
-//SUBSCRIBE TESTING
-/*var subscribeSession;
-var eventsListener = function(e){
-    console.info('session event = ' + e.type);
-    if(e.type == 'i_notify'){
-        console.info('NOTIFY content = ' + e.getContentString());
-        console.info('NOTIFY content-type = ' + e.getContentType());
-        txtRegStatus.innerHTML = "<i>ONLINE</i>";
-
-        if (e.getContentType() == 'application/pidf+xml') {
-            if (window.DOMParser) {
-                var parser = new DOMParser();
-                var xmlDoc = parser ? parser.parseFromString(e.getContentString(), "text/xml") : null;
-                var presenceNode = xmlDoc ? xmlDoc.getElementsByTagName ("presence")[0] : null;
-                if(presenceNode){
-                    var entityUri = presenceNode.getAttribute ("entity");
-                    var tupleNode = presenceNode.getElementsByTagName ("tuple")[0];
-                    if(entityUri && tupleNode){
-                        var statusNode = tupleNode.getElementsByTagName ("status")[0];
-                        if(statusNode){
-                            var basicNode = statusNode.getElementsByTagName ("basic")[0];
-                            if(basicNode){
-                                console.info('Presence notification: Uri = ' + entityUri + ' status = ' + basicNode.textContent);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        //$('#chatarea').scrollTop($('#chatarea')[0].scrollHeight);
     }
 }
-
-function subcribe(to){
-    subscribeSession = oSipStack.newSession('subscribe', {
-        expires: 200,
-        events_listener: { events: '*', listener: eventsListener },
-        sip_headers: [
-                      { name: 'Event', value: 'presence' }, // only notify for 'presence' events
-                      { name: 'Accept', value: 'application/pidf+xml' } // supported content types (COMMA-sparated)
-            ],
-        sip_caps: [
-                    { name: '+g.oma.sip-im', value: null },
-                    { name: '+audio', value: null },
-                    { name: 'language', value: '\"en,fr\"' }
-            ]
-    });
-    // start watching for entity's presence status (You may track event type 'connected' to be sure that the request has been accepted by the server)
-    subscribeSession.subscribe(to);
-}*/
 
 // Callback function for SIP Stacks
 function onSipEventStack(e /*SIPml.Stack.Event*/) {
@@ -469,6 +412,7 @@ function onSipEventStack(e /*SIPml.Stack.Event*/) {
 
                     var sRemoteNumber = (oSipSessionCall.getRemoteFriendlyName() || 'unknown');
                     txtCallStatus.innerHTML = "<i>Incoming call from [<b>" + sRemoteNumber + "</b>]</i>";
+                    $('#caller').val(" <i><b>" + sRemoteNumber + "</b></i>");
                     //showNotifICall(sRemoteNumber);
                 }
                 break;
@@ -485,7 +429,7 @@ function onSipEventStack(e /*SIPml.Stack.Event*/) {
                 $("#chatarea").html($("#chatarea").html()+"<b>From "+sRemoteNumber+": </b>"+e.getContentString()+"</br>");
                 $('#chatarea').scrollTop($('#chatarea')[0].scrollHeight);
 
-                //newmessageTone();
+                newmessageTone();
                 //destroy the call session
                 //mychatSession.hangup();
                 mychatSession = null;
@@ -532,7 +476,6 @@ function onSipEventSession(e /* SIPml.Session.Event */) {
 
                     moveUIToState('incall');
                     txtCallStatus.innerHTML = "<i>" + e.description + "</i>";
-                    //divCallOptions.style.opacity = bConnected ? 1 : 0;
                 }
                 break;
             } // 'connecting' | 'connected'
@@ -869,6 +812,10 @@ function stopRingbackTone() {
     catch (e) { }
 }
 
+function newmessageTone() {
+
+}
+
 //WORKS BUT CHECKAGAIN
 function toggleFullScreen() {
     if (videoRemote.webkitSupportsFullscreen) {
@@ -889,13 +836,9 @@ function uiCallTerminated(s_description) {
     //reset everything
     //************Remove comment and remove this on hangupbtn envent to enable auto terminate ui
     moveUIToState('connected');
-    //uiBtnCallSetText("Call");
-    //btnHangUp.value = 'HangUp';
-    //btnHoldResume.value = 'hold';
-    //btnMute.value = "Mute";
+
     phone_mute_button.text('Mute');
-    //btnCall.disabled = false;
-    //btnHangUp.disabled = true;
+
     //if (window.btnBFCP) window.btnBFCP.disabled = true;
 
     oSipSessionCall = null;
@@ -950,10 +893,8 @@ function moveUIToState(panel) {
             
         });
 
-        $('#caller').val("" + active_call.remote_identity.display_name);
+        //$('#caller').val("" + active_call.remote_identity.display_name);
         //callTarget.val("" + active_call.remote_identity.display_name + "is calling you");
-        //phone_accept_button.prop('disabled', false);
-        //phone_reject_button.prop('disabled', false);
     
     } else if (panel === 'calling') {
         //show calling box ( same to in call box)
@@ -967,7 +908,6 @@ function moveUIToState(panel) {
         unconnect_button.prop('disabled', false);
         phone_call_button.prop('disabled', true);
         phone_call_audio_button.prop('disabled', true);
-
 
     } else if (panel === 'incall') {
         //hide calling box and incoming box
@@ -986,4 +926,54 @@ function moveUIToState(panel) {
         phone_call_audio_button.prop('disabled', true);
     }
 }
+
+//SUBSCRIBE TESTING
+/*var subscribeSession;
+var eventsListener = function(e){
+    console.info('session event = ' + e.type);
+    if(e.type == 'i_notify'){
+        console.info('NOTIFY content = ' + e.getContentString());
+        console.info('NOTIFY content-type = ' + e.getContentType());
+        txtRegStatus.innerHTML = "<i>ONLINE</i>";
+
+        if (e.getContentType() == 'application/pidf+xml') {
+            if (window.DOMParser) {
+                var parser = new DOMParser();
+                var xmlDoc = parser ? parser.parseFromString(e.getContentString(), "text/xml") : null;
+                var presenceNode = xmlDoc ? xmlDoc.getElementsByTagName ("presence")[0] : null;
+                if(presenceNode){
+                    var entityUri = presenceNode.getAttribute ("entity");
+                    var tupleNode = presenceNode.getElementsByTagName ("tuple")[0];
+                    if(entityUri && tupleNode){
+                        var statusNode = tupleNode.getElementsByTagName ("status")[0];
+                        if(statusNode){
+                            var basicNode = statusNode.getElementsByTagName ("basic")[0];
+                            if(basicNode){
+                                console.info('Presence notification: Uri = ' + entityUri + ' status = ' + basicNode.textContent);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+function subcribe(to){
+    subscribeSession = oSipStack.newSession('subscribe', {
+        expires: 200,
+        events_listener: { events: '*', listener: eventsListener },
+        sip_headers: [
+                      { name: 'Event', value: 'presence' }, // only notify for 'presence' events
+                      { name: 'Accept', value: 'application/pidf+xml' } // supported content types (COMMA-sparated)
+            ],
+        sip_caps: [
+                    { name: '+g.oma.sip-im', value: null },
+                    { name: '+audio', value: null },
+                    { name: 'language', value: '\"en,fr\"' }
+            ]
+    });
+    // start watching for entity's presence status (You may track event type 'connected' to be sure that the request has been accepted by the server)
+    subscribeSession.subscribe(to);
+}*/
 
